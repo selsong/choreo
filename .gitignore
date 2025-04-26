@@ -12,7 +12,13 @@ keypoints/
 
 # Ignore Python venv
 venv/
+.venv/
 node_modules
 public/
 package-lock.json
 package.json
+ENV/
+env/
+*.pyc
+__pycache__/
+.DS_Store
