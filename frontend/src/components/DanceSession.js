@@ -35,13 +35,12 @@ const DanceSession = ({ onEnd }) => {
     const draw = () => {
       if (videoRef.current && groundTruth.length > 0 && !videoRef.current.paused && !videoRef.current.ended) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-
+    
         const currentTime = videoRef.current.currentTime;
-        const videoDuration = videoRef.current.duration;
-        const totalFrames = groundTruth.length;
-        const frameIdx = Math.floor((currentTime / videoDuration) * totalFrames);
-
-        if (frameIdx >= 0 && frameIdx < totalFrames) {
+        const fps = 30; // set manually to your video's frame rate
+        const frameIdx = Math.floor(currentTime * fps);
+    
+        if (frameIdx >= 0 && frameIdx < groundTruth.length) {
           const keypoints = groundTruth[frameIdx];
           ctx.fillStyle = 'red';
           for (const idx in keypoints) {
