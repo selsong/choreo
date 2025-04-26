@@ -3,12 +3,26 @@ import './App.css';
 
 function App() {
   const videoRef = useRef(null);
+  const webcamRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     // Load the ground truth video
     if (videoRef.current) {
       videoRef.current.src = '/ground-truth-videos/hottogo.mov';
+    }
+
+    // Initialize webcam
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          if (webcamRef.current) {
+            webcamRef.current.srcObject = stream;
+          }
+        })
+        .catch(err => {
+          console.error("Error accessing webcam:", err);
+        });
     }
   }, []);
 
@@ -25,10 +39,10 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Dance Comparison</h1>
+      <h1>Choreo</h1>
       <div className="video-container">
         <div className="video-wrapper">
-          <h2>Ground Truth</h2>
+          <h2>Reference Video</h2>
           <video
             ref={videoRef}
             controls
@@ -40,10 +54,11 @@ function App() {
           </button>
         </div>
         <div className="video-wrapper">
-          <h2>Your Webcam with Feedback</h2>
-          <img
-            src="http://localhost:5000/video_feed"
-            alt="Webcam feed"
+          <h2>Webcam</h2>
+          <video
+            ref={webcamRef}
+            autoPlay
+            playsInline
             width="640"
             height="480"
           />
