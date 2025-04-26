@@ -6,7 +6,7 @@ import os
 
 mp_pose = mp.solutions.pose
 
-video_name = 'hottogo.mov'
+video_name = 'hot_to_go.mov'
 video_path = 'ground-truth-videos/' + video_name
 output_keypoints_path = 'keypoints/'
 temp_frames_path = 'temp_frames/'
