@@ -12,3 +12,7 @@ keypoints/
 
 # Ignore Python venv
 venv/
+node_modules
+public/
+package-lock.json
+package.json
