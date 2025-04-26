@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import '../styles/DanceSession.css';
 
 const DanceSession = ({ onEnd }) => {
   const videoRef = useRef(null);
@@ -8,7 +9,7 @@ const DanceSession = ({ onEnd }) => {
 
   // Load keypoints JSON
   useEffect(() => {
-    fetch('/keypoints/hot_to_go-keypoints.json') // Copy keypoints to frontend/public/keypoints/
+    fetch('./keypoints/hot_to_go-keypoints.json') // Copy keypoints to frontend/public/keypoints/
       .then(res => res.json())
       .then(data => setGroundTruth(data))
       .catch(err => console.error("Error loading keypoints:", err));
@@ -35,14 +36,15 @@ const DanceSession = ({ onEnd }) => {
     const draw = () => {
       if (videoRef.current && groundTruth.length > 0 && !videoRef.current.paused && !videoRef.current.ended) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    
+
         const currentTime = videoRef.current.currentTime;
-        const fps = 30; // set manually to your video's frame rate
-        const frameIdx = Math.floor(currentTime * fps);
-    
-        if (frameIdx >= 0 && frameIdx < groundTruth.length) {
+        const videoDuration = videoRef.current.duration;
+        const totalFrames = groundTruth.length;
+        const frameIdx = Math.floor((currentTime / videoDuration) * totalFrames);
+
+        if (frameIdx >= 0 && frameIdx < totalFrames) {
           const keypoints = groundTruth[frameIdx];
-          ctx.fillStyle = 'red';
+          ctx.fillStyle = 'white';
           for (const idx in keypoints) {
             const [x, y] = keypoints[idx];
             ctx.beginPath();
@@ -95,8 +97,8 @@ const DanceSession = ({ onEnd }) => {
   };
 
   return (
-    <div className="dance-session">
-      <h1>Choreo</h1>
+    <div className="dance-session aura-background">
+      <h1>choreo</h1>
       <div className="video-container">
 
         {/* Reference Video + Canvas */}
@@ -105,15 +107,18 @@ const DanceSession = ({ onEnd }) => {
           <video
             ref={videoRef}
             src="/videos/hot_to_go.mp4"
-            width="640"
-            height="480"
-            style={{ display: 'none' }}
+            style={{
+              width: 'auto',
+              height: 'auto',
+              display: 'none',
+              objectFit: 'contain'
+            }}
             crossOrigin="anonymous"
           />
           <canvas
             id="referenceCanvas"
-            width="640"
-            height="480"
+            width="500"
+            height="700"
           />
           <button onClick={togglePlay} style={{ marginTop: '10px' }}>
             {isPlaying ? 'Pause' : 'Play'}
