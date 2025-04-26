@@ -131,26 +131,65 @@ def generate_frames():
                     mp_pose.POSE_CONNECTIONS
                 )
 
+            # if results.pose_landmarks and frame_idx < len(ground_truth):
+            #     live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
+            #     ground_landmarks = ground_truth[frame_idx]
+
+            #     distance = calculate_pose_distance(ground_landmarks, live_landmarks)
+
+            #     if distance < 0.3: # lowkey need to change this
+            #         feedback_text = "Perfect!"
+            #     else:
+            #         feedback_text = "Adjust a bit!"
+
+            #     frame_idx += 1
+            #detect specific limbs that are off
             if results.pose_landmarks and frame_idx < len(ground_truth):
                 live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
                 ground_landmarks = ground_truth[frame_idx]
 
-                distance = calculate_pose_distance(ground_landmarks, live_landmarks)
+                # Calculate distance for each keypoint
+                keypoint_distances = {}
+                for idx in ground_landmarks.keys():
+                    ground_point = np.array(ground_landmarks[idx][:2])
+                    live_point = np.array(live_landmarks[idx][:2])
+                    dist = np.linalg.norm(ground_point - live_point)
+                    keypoint_distances[int(idx)] = dist
 
-                if distance < 0.5: # lowkey need to change this
-                    feedback_text = "Perfect!"
+                # Overall average distance
+                average_distance = np.mean(list(keypoint_distances.values()))
+                match_percent = max(0, 100 - average_distance * 100)
+
+                # Detailed limb feedback
+                feedback_issues = []
+
+                def is_off(indexes, threshold=0.7):  # You can tweak threshold
+                    return any(keypoint_distances.get(i, 0) > threshold for i in indexes)
+
+                if is_off([12, 14, 16]):  # Right arm
+                    feedback_issues.append("Move right arm")
+                if is_off([11, 13, 15]):  # Left arm
+                    feedback_issues.append("Move left arm")
+                if is_off([24, 26, 28]):  # Right leg
+                    feedback_issues.append("Move right leg")
+                if is_off([23, 25, 27]):  # Left leg
+                    feedback_issues.append("Move left leg")
+
+                if not feedback_issues and average_distance < 0.5:
+                    feedback_text = f"Perfect! Match: {match_percent:.1f}%"
                 else:
-                    feedback_text = "Adjust a bit!"
+                    feedback_text = f"{', '.join(feedback_issues)} (Match: {match_percent:.1f}%)"
 
                 frame_idx += 1
+
             else:
-                feedback_text = "No More Frames!" if frame_idx >= len(ground_truth) else "Pose Not Detected"
+                feedback_text = "Video Ended! Congrats, you're done!" if frame_idx >= len(ground_truth) else "Pose Not Detected"
 
             with lock:
                 latest_feedback = feedback_text
 
             # Draw feedback text on frame
-            cv2.putText(frame, feedback_text, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            # cv2.putText(frame, feedback_text, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         # Encode frame as JPEG
         ret, buffer = cv2.imencode('.jpg', frame)

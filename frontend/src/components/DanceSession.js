@@ -79,16 +79,32 @@ const DanceSession = ({ onEnd }) => {
   const [feedback, setFeedback] = useState("Loading...");
 
   useEffect(() => {
-    // Poll feedback from Flask server every 0.5s
     const interval = setInterval(() => {
       fetch('http://localhost:5001/feedback')
         .then(res => res.json())
-        .then(data => setFeedback(data.feedback))
+        .then(data => {
+          // Only update if different
+          if (data.feedback !== feedback) {
+            setFeedback(data.feedback);
+          }
+        })
         .catch(err => console.error("Error fetching feedback:", err));
-    }, 500);
-
+    }, 1000); // slower 2 seconds for better calmness
+  
     return () => clearInterval(interval);
-  }, []);
+  }, [feedback]); // 👈 IMPORTANT: depend on `feedback`
+  
+
+    // Decide color based on feedback content
+    const getFeedbackColor = (feedback) => {
+      if (feedback.includes("Perfect")) {
+        return "green";
+      } else if (feedback.includes("Pose Not Detected")) {
+        return "gray";
+      } else {
+        return "orange";
+      }
+    };
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -131,9 +147,15 @@ const DanceSession = ({ onEnd }) => {
             width="640"
             height="480"
           />
-          {/* Show feedback */}
-          <div style={{ marginTop: '10px', fontSize: '24px', fontWeight: 'bold' }}>
-            Feedback: {feedback}
+          {/* Feedback */}
+          <div style={{ marginTop: '20px' }}>
+            <div style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: getFeedbackColor(feedback)
+            }}>
+              {feedback}
+            </div>
           </div>
         </div>
       </div>
