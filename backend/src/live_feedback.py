@@ -75,9 +75,12 @@ import mediapipe as mp
 import numpy as np
 import json
 import threading
+from flask_cors import CORS
+
 
 # Create Flask app
 app = Flask(__name__)
+CORS(app)
 
 # Load saved keypoints
 with open('./keypoints/hot_to_go-keypoints.json', 'r') as f:
@@ -104,6 +107,8 @@ def calculate_pose_distance(ground_landmarks, live_landmarks):
         distances.append(dist)
     return np.mean(distances)
 
+processing = False
+
 def generate_frames():
     global frame_idx, latest_feedback
     while True:
@@ -113,38 +118,39 @@ def generate_frames():
 
         frame = cv2.flip(frame, 1)  # Mirror the webcam for natural feel
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = pose.process(frame_rgb)
+        if processing:
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = pose.process(frame_rgb)
 
-        feedback_text = "Pose Not Detected"
+            feedback_text = "Pose Not Detected"
 
-        if results.pose_landmarks:
-            mp.solutions.drawing_utils.draw_landmarks(
-                frame,
-                results.pose_landmarks,
-                mp_pose.POSE_CONNECTIONS
-            )
+            if results.pose_landmarks:
+                mp.solutions.drawing_utils.draw_landmarks(
+                    frame,
+                    results.pose_landmarks,
+                    mp_pose.POSE_CONNECTIONS
+                )
 
-        if results.pose_landmarks and frame_idx < len(ground_truth):
-            live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
-            ground_landmarks = ground_truth[frame_idx]
+            if results.pose_landmarks and frame_idx < len(ground_truth):
+                live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
+                ground_landmarks = ground_truth[frame_idx]
 
-            distance = calculate_pose_distance(ground_landmarks, live_landmarks)
+                distance = calculate_pose_distance(ground_landmarks, live_landmarks)
 
-            if distance < 0.5: # lowkey need to change this
-                feedback_text = "Perfect!"
+                if distance < 0.5: # lowkey need to change this
+                    feedback_text = "Perfect!"
+                else:
+                    feedback_text = "Adjust a bit!"
+
+                frame_idx += 1
             else:
-                feedback_text = "Adjust a bit!"
+                feedback_text = "No More Frames!" if frame_idx >= len(ground_truth) else "Pose Not Detected"
 
-            frame_idx += 1
-        else:
-            feedback_text = "No More Frames!" if frame_idx >= len(ground_truth) else "Pose Not Detected"
+            with lock:
+                latest_feedback = feedback_text
 
-        with lock:
-            latest_feedback = feedback_text
-
-        # Draw feedback text on frame
-        cv2.putText(frame, feedback_text, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            # Draw feedback text on frame
+            cv2.putText(frame, feedback_text, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         # Encode frame as JPEG
         ret, buffer = cv2.imencode('.jpg', frame)
@@ -152,7 +158,7 @@ def generate_frames():
 
         # Stream frame
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
 @app.route('/video_feed')
 def video_feed():
@@ -163,6 +169,19 @@ def video_feed():
 def feedback():
     with lock:
         return jsonify({'feedback': latest_feedback})
+
+@app.route('/start_processing')
+def start_processing():
+    global processing, frame_idx
+    processing = True
+    frame_idx = 0  # reset when starting!
+    return jsonify({"status": "started"}), 200
+
+@app.route('/stop_processing')
+def stop_processing():
+    global processing
+    processing = False
+    return jsonify({"status": "stopped"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, threaded=True)

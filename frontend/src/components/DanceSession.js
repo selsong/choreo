@@ -71,15 +71,17 @@
 
 // export default DanceSession;
 
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
 const DanceSession = ({ onEnd }) => {
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [feedback, setFeedback] = useState("Loading...");
 
   useEffect(() => {
     // Poll feedback from Flask server every 0.5s
     const interval = setInterval(() => {
-      fetch('http://localhost:5000/feedback')
+      fetch('http://localhost:5001/feedback')
         .then(res => res.json())
         .then(data => setFeedback(data.feedback))
         .catch(err => console.error("Error fetching feedback:", err));
@@ -88,13 +90,36 @@ const DanceSession = ({ onEnd }) => {
     return () => clearInterval(interval);
   }, []);
 
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        fetch('http://localhost:5001/stop_processing');
+      } else {
+        videoRef.current.play();
+        fetch('http://localhost:5001/start_processing');
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+
   return (
     <div className="dance-session">
       <h1>Choreo</h1>
       <div className="video-container">
         <div className="video-wrapper">
           <h2>Reference Video</h2>
-          <video src="/videos/hot_to_go.mp4" controls width="640" height="480" />
+          <video
+            ref={videoRef}
+            src="/videos/hot_to_go.mp4"
+            controls
+            width="640"
+            height="480"
+          />
+          <button onClick={togglePlay} style={{ marginTop: '10px' }}>
+            {isPlaying ? 'Pause' : 'Play'}
+          </button>
         </div>
 
         <div className="video-wrapper">
