@@ -60,3 +60,23 @@ h2 {
   color: #666;
   margin-bottom: 10px;
 }
+
+.end-dance-button {
+  background-color: #f44336;
+  margin-top: 20px;
+}
+
+.end-dance-button:hover {
+  background-color: #d32f2f;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 30px;
+}
+
+h2 {
+  color: #666;
+  margin-bottom: 10px;
+}
+
