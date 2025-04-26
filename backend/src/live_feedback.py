@@ -80,7 +80,7 @@ import threading
 app = Flask(__name__)
 
 # Load saved keypoints
-with open('backend/keypoints/hot_to_go-keypoints.json', 'r') as f:
+with open('./keypoints/hot_to_go-keypoints.json', 'r') as f:
     ground_truth = json.load(f)
 
 print(f"Loaded ground truth frames: {len(ground_truth)}")
