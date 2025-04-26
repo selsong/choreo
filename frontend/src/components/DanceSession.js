@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 
 const DanceSession = ({ onEnd }) => {
   const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [feedback, setFeedback] = useState("Loading...");
   const [groundTruth, setGroundTruth] = useState([]);
 
@@ -14,17 +14,6 @@ const DanceSession = ({ onEnd }) => {
       .catch(err => console.error("Error loading keypoints:", err));
   }, []);
 
-  // Force video to play after it loads
-  useEffect(() => {
-    if (videoRef.current) {
-      const video = videoRef.current;
-      const handleLoaded = () => {
-        video.play();
-      };
-      video.addEventListener('loadeddata', handleLoaded);
-      return () => video.removeEventListener('loadeddata', handleLoaded);
-    }
-  }, []);
 
   // Draw video + keypoints onto canvas
   useEffect(() => {
@@ -81,16 +70,22 @@ const DanceSession = ({ onEnd }) => {
     else return "orange";
   };
 
-  const togglePlay = () => {
+  const startOrRestartDance = async () => {
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        fetch('http://localhost:5001/stop_processing');
-      } else {
-        videoRef.current.play();
-        fetch('http://localhost:5001/start_processing');
-      }
-      setIsPlaying(!isPlaying);
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0; // ⏪ Reset video
+  
+      // First stop backend processing
+      await fetch('http://localhost:5001/stop_processing');
+  
+      //tiny wait to make sure it stops cleanly
+      await new Promise((resolve) => setTimeout(resolve, 300));
+  
+      // Then start fresh backend processing
+      await fetch('http://localhost:5001/start_processing');
+  
+      videoRef.current.play(); // Play video again
+      setHasPlayedOnce(true);
     }
   };
 
@@ -115,8 +110,8 @@ const DanceSession = ({ onEnd }) => {
             width="640"
             height="480"
           />
-          <button onClick={togglePlay} style={{ marginTop: '10px' }}>
-            {isPlaying ? 'Pause' : 'Play'}
+          <button onClick={startOrRestartDance} style={{ marginTop: '10px' }}>
+            {hasPlayedOnce ? 'Restart' : 'Play'}
           </button>
         </div>
 
