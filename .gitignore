@@ -1,0 +1,14 @@
+# Ignore folders
+temp_frames/
+ground-truth-videos/
+keypoints/
+
+# Ignore big files
+*.mp4
+*.mov
+*.task
+*.gif
+*.avi
+
+# Ignore Python venv
+venv/
