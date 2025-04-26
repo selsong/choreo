@@ -5,13 +5,14 @@ import json
 import time
 
 # Load saved keypoints (your Hot To Go dance!)
-with open('keypoints/hot_to_go-keypoints.json', 'r') as f:
+with open('keypoints/hottogo-keypoints.json', 'r') as f:
     ground_truth = json.load(f)
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
-cap = cv2.VideoCapture(0)
+# Initialize video capture with explicit backend
+cap = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  # Use AVFoundation for macOS
 
 frame_idx = 0  # To track where we are in the ground-truth dance
 
