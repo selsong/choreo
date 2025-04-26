@@ -8,7 +8,7 @@ const DanceSession = ({ onEnd }) => {
   useEffect(() => {
     // Load the ground truth video
     if (videoRef.current) {
-      videoRef.current.src = '/videos/hottogo.mov';
+      videoRef.current.src = '/videos/hot_to_go.mov';
     }
 
     // Initialize webcam

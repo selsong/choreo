@@ -5,7 +5,7 @@ import json
 import time
 
 # Load saved keypoints (your Hot To Go dance!)
-with open('keypoints/hottogo-keypoints.json', 'r') as f:
+with open('keypoints/hot_to_go-keypoints.json', 'r') as f:
     ground_truth = json.load(f)
 
 mp_pose = mp.solutions.pose
