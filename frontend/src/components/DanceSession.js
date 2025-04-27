@@ -117,7 +117,7 @@ const DanceSession = ({ onEnd, onPractice }) => {
 
     if (videoRef.current) {
       setCountdown(3);
-
+  
       let countdownTimer = setInterval(() => {
         setCountdown(prev => {
           if (prev === 1) {
@@ -161,7 +161,7 @@ const DanceSession = ({ onEnd, onPractice }) => {
   };
 
   return (
-    <div className="dance-sess">
+    <div className="dance-sess aura-background">
       <h1>choreo</h1>
 
       {showStartOverlay && (
@@ -202,12 +202,12 @@ const DanceSession = ({ onEnd, onPractice }) => {
           <img
             src="http://localhost:5001/video_feed"
             alt="Dancing Live Stream"
-            width="1024"
-            height="600"
+            width="640"
+            height="375"
           />
           <div key={feedback} className={`feedback-text ${getFeedbackColorClass(feedback)}`}>
             {feedback}
-          </div>
+
         </div>
       </div>
 
@@ -229,6 +229,14 @@ const DanceSession = ({ onEnd, onPractice }) => {
         >
           Practice in 0.5x
         </button>
+      </div>
+      <button 
+        onClick={handleEndDance}
+        className="end-dance-button"
+        style={{ marginTop: '20px' }}
+      >
+        End Dance
+      </button>
       </div>
     </div>
   );
