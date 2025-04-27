@@ -214,9 +214,6 @@ const DanceSession = ({ onEnd }) => {
             width="380"
             height="640"
           />
-          <button onClick={startOrRestartDance} style={{ marginTop: '10px' }}>
-            {hasPlayedOnce ? 'Restart' : 'Play'}
-          </button>
         </div>
 
         <div className="video-wrapper">
@@ -224,30 +221,39 @@ const DanceSession = ({ onEnd }) => {
           <img
             src="http://localhost:5001/video_feed"
             alt="Dancing Live Stream"
-            width="640"
-            height="375"
+            width="1024"
+            height="600"
           />
           <div 
-            key={feedback} 
-            className="feedback-text" 
-            style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: getFeedbackColor(feedback)
-            }}
+            key={feedback}
+            className={`feedback-text ${
+              feedback.includes("Perfect") 
+                ? "feedback-perfect"
+                : feedback.includes("Pose Not Detected") 
+                ? "feedback-neutral"
+                : "feedback-warning"
+            }`}
           >
             {feedback}
           </div>
         </div>
       </div>
 
-      <button 
-        onClick={handleEndDance}
-        className="end-dance-button"
-        style={{ marginTop: '20px' }}
-      >
-        End Dance
-      </button>
+      <div className="button-row">
+        <button 
+          onClick={startOrRestartDance} 
+          className="restart-button"
+        >
+          {hasPlayedOnce ? 'Restart' : 'Play'}
+        </button>
+
+        <button 
+          onClick={handleEndDance}
+          className="end-dance-button"
+        >
+          End Dance
+        </button>
+      </div>
     </div>
   );
 };

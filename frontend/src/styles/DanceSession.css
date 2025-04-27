@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -82,50 +84,22 @@
 }
     
   /* Play/Pause and End Dance buttons */
-  button {
+  button:not(.restart-button):not(.end-dance-button) {
     padding: 10px 20px;
-    border: none;
-    border-radius: 30px;
-    background-color: #94c3fa;
-    color: white;
-    font-weight: bold;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    margin-top: 10px;
+    /* ... */
   }
   
   button:hover {
     transform: scale(1.05);
     box-shadow: 0 0 15px rgba(255, 150, 255, 0.7);
   }
-  
-  .end-dance-button {
-    margin-top: 20px;
-    background-color: #6a5acd;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 30px;
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .end-dance-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(100, 150, 255, 0.7);
-  }
-  
   /* Canvas */
   #referenceCanvas {
-    border-radius: 10px;
-    margin-top: 10px;
+    border-radius: 20px;
   }
   
-  /* Feedback text */
-  .video-wrapper div {
-    margin-top: 10px;
+  .video-wrapper .feedback-text {
+    margin-top: 20px;
   }
   
   .countdown-overlay {
@@ -183,7 +157,7 @@
   .start-button {
     padding: 20px 40px;
     font-size: 2rem;
-    border-radius: 50px;
+    border-radius: 20px;
     background-color: #94c3fa;
     color: white;
     font-weight: bold;
@@ -205,3 +179,91 @@
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
   }
+
+  .button-row {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 30px;
+  }
+  
+  .restart-button {
+    padding: 15px 30px;
+    font-size: 1.5rem;
+    border: none;
+    border-radius: 20px;
+    background-color: #4CAF50; /* Green */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1;
+  }
+  
+  .restart-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(144, 238, 144, 0.7);
+  }
+  
+  .end-dance-button {
+    padding: 15px 30px;
+    font-size: 1.5rem;
+    border: none;
+    border-radius: 20px;
+    background-color: #f44336; /* Red */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1;
+  }
+  
+  .end-dance-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 100, 100, 0.7);
+  }
+  
+  .feedback-text {
+    margin-top: 20px;
+    padding: 15px 25px;
+    border-radius: 18px;
+    font-size: 1.8rem;
+    font-weight: 600;
+    text-align: center;
+    color: white;
+    font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+    animation: fadeAndPop 0.5s ease;
+    transition: background-color 0.5s, box-shadow 0.5s, transform 0.5s;
+  }
+  
+  /* Pastel solid colors */
+  .feedback-perfect {
+    background-color: #a8e6cf; /* Soft mint green */
+    box-shadow: 0 0 20px rgba(168, 230, 207, 0.7);
+  }
+  
+  .feedback-warning {
+    background-color: #ffd3b6; /* Soft peach */
+    box-shadow: 0 0 20px rgba(255, 211, 182, 0.7);
+  }
+  
+  .feedback-neutral {
+    background-color: #dfe9f3; /* Soft cloudy blue */
+    box-shadow: 0 0 20px rgba(223, 233, 243, 0.7);
+  }
+  
+  @keyframes fadeAndPop {
+    0% {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  
