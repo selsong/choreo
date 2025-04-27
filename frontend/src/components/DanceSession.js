@@ -160,8 +160,8 @@ const DanceSession = ({ onEnd }) => {
           />
           <canvas
             id="referenceCanvas"
-            width="500"
-            height="700"
+            width="380"
+            height="640"
           />
           <button onClick={startOrRestartDance} style={{ marginTop: '10px' }}>
             {hasPlayedOnce ? 'Restart' : 'Play'}
@@ -175,7 +175,7 @@ const DanceSession = ({ onEnd }) => {
             src="http://localhost:5001/video_feed"
             alt="Dancing Live Stream"
             width="640"
-            height="480"
+            height="375"
           />
           <div style={{ marginTop: '20px' }}>
             <div style={{
