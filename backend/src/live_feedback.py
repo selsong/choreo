@@ -56,7 +56,6 @@ def generate_frames():
                 mp_pose.POSE_CONNECTIONS
             )
 
-
         feedback_text = "Waiting to Start..."
 
         if processing and start_time:
@@ -65,6 +64,17 @@ def generate_frames():
 
             if frame_idx >= total_frames:
                 feedback_text = "Video Ended! Congrats, you're done!"
+
+                # 🛠 Auto-clear saved_frames when video ends
+                folder = 'saved_frames'
+                try:
+                    if os.path.exists(folder):
+                        shutil.rmtree(folder)
+                    os.makedirs(folder)
+                    print("✅ saved_frames cleared automatically after session!")
+                except Exception as e:
+                    print(f'❌ Error clearing saved_frames automatically: {e}')
+
             elif results.pose_landmarks and frame_idx < total_frames:
                 live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
                 ground_landmarks = ground_truth[frame_idx]
@@ -81,7 +91,7 @@ def generate_frames():
 
                 feedback_issues = []
 
-                def is_off(indexes, threshold=0.7):  # keep your version (0.7)
+                def is_off(indexes, threshold=0.7):
                     return any(keypoint_distances.get(i, 0) > threshold for i in indexes)
 
                 if is_off([12, 14, 16]):
@@ -100,7 +110,7 @@ def generate_frames():
                 else:
                     feedback_text = f"{', '.join(feedback_issues)} (Match: {match_percent:.1f}%)"
 
-                # 🛠 Save frames once per second
+                # 🛠 Save frame once per second
                 now = time.time()
                 if now - last_saved_time >= 1.0:
                     last_saved_time = now
@@ -169,10 +179,10 @@ def clear_saved_frames():
         if os.path.exists(folder):
             shutil.rmtree(folder)
         os.makedirs(folder)
-        print("✅ saved_frames cleared successfully!")
+        print("✅ saved_frames manually cleared!")
         return jsonify({"status": "cleared"}), 200
     except Exception as e:
-        print(f'Failed to clear saved_frames. Reason: {e}')
+        print(f'❌ Error manually clearing saved_frames: {e}')
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

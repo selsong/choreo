@@ -126,13 +126,20 @@ const DanceSession = ({ onEnd }) => {
   };
 
   const actuallyStartDance = async () => {
-    videoRef.current.pause();
-    videoRef.current.currentTime = 0;
-    await fetch('http://localhost:5001/stop_processing');
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    await fetch('http://localhost:5001/start_processing');
-    videoRef.current.play();
-    setHasPlayedOnce(true);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+  
+      await fetch('http://localhost:5001/stop_processing');
+      await fetch('http://localhost:5001/clear_saved_frames'); // 🧹 Clear frames before restarting!
+  
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await fetch('http://localhost:5001/start_processing');
+  
+      videoRef.current.play();
+      setHasPlayedOnce(true);
+      setStartTime(Date.now()); // Reset start time for fresh feedback logging
+    }
   };
 
   const handleEndDance = async () => {
