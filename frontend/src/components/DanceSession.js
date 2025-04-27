@@ -88,14 +88,21 @@ const DanceSession = ({ onEnd }) => {
 
   const startOrRestartDance = async () => {
     if (videoRef.current) {
-      setCountdown(3); // Start 3 second countdown!
-      
+      setCountdown(3);
+  
       let countdownTimer = setInterval(() => {
         setCountdown(prev => {
           if (prev === 1) {
+            // After 1, show "GO!"
+            setTimeout(() => {
+              setCountdown("GO");
+              setTimeout(() => {
+                actuallyStartDance(); // after showing "GO!", start dance
+                setCountdown(null);
+              }, 800); // show "GO!" for 0.8 seconds
+            }, 1000);
             clearInterval(countdownTimer);
-            actuallyStartDance(); // after countdown is done, start
-            return null;
+            return 1;
           } else {
             return prev - 1;
           }
@@ -135,7 +142,9 @@ const DanceSession = ({ onEnd }) => {
 
       {countdown !== null && (
         <div className="countdown-overlay">
-          <h1>{countdown}</h1>
+          <div key={countdown} className="countdown-number">
+            {countdown}
+          </div>
         </div>
       )}
 
@@ -177,14 +186,16 @@ const DanceSession = ({ onEnd }) => {
             width="640"
             height="375"
           />
-          <div style={{ marginTop: '20px' }}>
-            <div style={{
+          <div 
+            key={feedback} 
+            className="feedback-text" 
+            style={{
               fontSize: '24px',
               fontWeight: 'bold',
               color: getFeedbackColor(feedback)
-            }}>
-              {feedback}
-            </div>
+            }}
+          >
+            {feedback}
           </div>
         </div>
 
