@@ -78,7 +78,9 @@ def generate_frames():
             elapsed_time = time.time() - start_time
             frame_idx = int(elapsed_time * fps)
 
-            if results.pose_landmarks and frame_idx < total_frames:
+            if frame_idx >= total_frames:
+                feedback_text = "Video Ended! Congrats, you're done!";
+            elif results.pose_landmarks and frame_idx < total_frames:
                 live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
                 ground_landmarks = ground_truth[frame_idx]
 
@@ -94,7 +96,7 @@ def generate_frames():
 
                 feedback_issues = []
 
-                def is_off(indexes, threshold=0.7):
+                def is_off(indexes, threshold=0.6):
                     return any(keypoint_distances.get(i, 0) > threshold for i in indexes)
 
                 if is_off([12, 14, 16]):
@@ -106,13 +108,12 @@ def generate_frames():
                 if is_off([23, 25, 27]):
                     feedback_issues.append("Move left leg")
 
-                if not feedback_issues and average_distance < 0.5:
+                if not feedback_issues and average_distance < 0.4:
                     feedback_text = f"Perfect! Match: {match_percent:.1f}%"
+                elif len(feedback_issues) >= 3 or match_percent < 20:
+                    feedback_text = "Make sure your whole body is in frame!"
                 else:
                     feedback_text = f"{', '.join(feedback_issues)} (Match: {match_percent:.1f}%)"
-
-            else:
-                feedback_text = "Video Ended! Congrats, you're done!" if frame_idx >= total_frames else "Pose Not Detected"
 
         with lock:
             latest_feedback = feedback_text
@@ -237,7 +238,7 @@ def start_processing():
     processing = True
     frame_idx = 0  # reset when starting!
     start_time = time.time()
-    latest_feedback = "Waiting to Start..."
+    # latest_feedback = "Waiting to Start..."
     return jsonify({"status": "started"}), 200
 
 @app.route('/stop_processing')
@@ -245,6 +246,15 @@ def stop_processing():
     global processing
     processing = False
     return jsonify({"status": "stopped"}), 200
+
+@app.route('/reset_feedback')
+def reset_feedback():
+    global latest_feedback, frame_idx, processing
+    processing = False
+    frame_idx = 0
+    latest_feedback = "Waiting to Start..."
+    return jsonify({"status": "reset"}), 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, threaded=True)

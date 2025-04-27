@@ -6,6 +6,19 @@ const DanceSession = ({ onEnd }) => {
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [feedback, setFeedback] = useState("Loading...");
   const [groundTruth, setGroundTruth] = useState([]);
+  const [countdown, setCountdown] = useState(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.addEventListener('loadeddata', () => {
+        // Force draw the first frame once it's ready
+        const canvas = document.getElementById('referenceCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      });
+    }
+  }, []);
+  
 
   // Load keypoints JSON
   useEffect(() => {
@@ -23,7 +36,7 @@ const DanceSession = ({ onEnd }) => {
     const ctx = canvas.getContext('2d');
 
     const draw = () => {
-      if (videoRef.current && groundTruth.length > 0 && !videoRef.current.paused && !videoRef.current.ended) {
+      if (videoRef.current && groundTruth.length > 0) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
     
         const currentTime = videoRef.current.currentTime;
@@ -73,26 +86,44 @@ const DanceSession = ({ onEnd }) => {
 
   const startOrRestartDance = async () => {
     if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0; // ⏪ Reset video
-  
-      // First stop backend processing
-      await fetch('http://localhost:5001/stop_processing');
-  
-      //tiny wait to make sure it stops cleanly
-      await new Promise((resolve) => setTimeout(resolve, 300));
-  
-      // Then start fresh backend processing
-      await fetch('http://localhost:5001/start_processing');
-  
-      videoRef.current.play(); // Play video again
-      setHasPlayedOnce(true);
+      setCountdown(3); // Start 3 second countdown!
+      
+      let countdownTimer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev === 1) {
+            clearInterval(countdownTimer);
+            actuallyStartDance(); // after countdown is done, start
+            return null;
+          } else {
+            return prev - 1;
+          }
+        });
+      }, 1000);
     }
   };
+
+  const actuallyStartDance = async () => {
+    videoRef.current.pause();
+    videoRef.current.currentTime = 0;
+    await fetch('http://localhost:5001/stop_processing');
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await fetch('http://localhost:5001/start_processing');
+    videoRef.current.play();
+    setHasPlayedOnce(true);
+  };
+
 
   return (
     <div className="dance-sess aura-background">
       <h1>choreo</h1>
+
+
+      {countdown !== null && (
+        <div className="countdown-overlay">
+          <h1>{countdown}</h1>
+        </div>
+      )}
+
       <div className="video-container">
 
         {/* Reference Video + Canvas */}
@@ -104,10 +135,11 @@ const DanceSession = ({ onEnd }) => {
             width="640"
             height="480"
             style={{
-              width: 'auto',
-              height: 'auto',
-              display: 'none',
-              objectFit: 'contain'
+              width: 0,
+              height: 0,
+              opacity: 0,
+              position: 'absolute',
+              pointerEvents: 'none',
             }}
             crossOrigin="anonymous"
           />
@@ -142,7 +174,18 @@ const DanceSession = ({ onEnd }) => {
         </div>
 
       </div>
-      <button onClick={onEnd} className="end-dance-button">End Dance</button>
+      <button 
+        onClick={async () => {
+          await fetch('http://localhost:5001/reset_feedback');
+          const res = await fetch('http://localhost:5001/feedback'); // Immediately get fresh feedback
+          const data = await res.json();
+          setFeedback(data.feedback); // Update it right away
+          onEnd();  // THEN switch page
+        }} 
+        className="end-dance-button"
+      >
+        End Dance
+      </button>
     </div>
   );
 };
