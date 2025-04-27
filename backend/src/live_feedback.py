@@ -43,7 +43,7 @@ start_time = None
 
 def generate_frames():
     global frame_idx, latest_feedback, last_saved_time, start_time
-    fps = 30
+    # fps = 30
     total_frames = len(ground_truth)
 
     while True:
@@ -132,12 +132,24 @@ def feedback():
     with lock:
         return jsonify({'feedback': latest_feedback})
 
+fps = 30
 @app.route('/start_processing')
 def start_processing():
-    global processing, frame_idx, start_time, latest_feedback
+    global processing, frame_idx, start_time, latest_feedback, fps
     processing = True
     frame_idx = 0
     start_time = time.time()
+
+    # Check if slowing down (based on query param ?mode=slow)
+    mode = request.args.get('mode', 'normal')
+    if mode == 'slow':
+        fps = 15  # Slow mode: 15fps
+        print("⚡ Slow mode activated: 15 fps")
+    else:
+        fps = 30  # Normal mode
+        print("⚡ Normal mode activated: 30 fps")
+
+    latest_feedback = "Waiting to Start..."
     return jsonify({"status": "started"}), 200
 
 @app.route('/stop_processing')

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 export default function HomePage({ onStart }) {
   const [showSlogan, setShowSlogan] = useState(false);
+  const [loading, setLoading] = useState(false); // NEW: loading state
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSlogan(true), 1500);
@@ -19,8 +20,13 @@ export default function HomePage({ onStart }) {
     const file = event.target.files[0];
     if (file) {
       console.log("File selected:", file.name);
-      // 🔵 instead of navigate, call onStart
-      onStart();
+      setLoading(true); // Show loading spinner
+
+      // Simulate a 2-second \"processing\" delay
+      setTimeout(() => {
+        setLoading(false);
+        onStart(); // Then start Dance Session
+      }, 2000);
     }
   };
 
@@ -39,7 +45,7 @@ export default function HomePage({ onStart }) {
         {/* Slogan */}
         {showSlogan && (
           <p className="text-white text-xl md:text-2xl font-light animate-fadeUp">
-            DANCE LIKE <span className="font-semibold">NOBODY's</span> WATCHING
+            DANCE LIKE <span className="font-semibold">NOBODY'S</span> WATCHING
           </p>
         )}
 
@@ -61,14 +67,23 @@ export default function HomePage({ onStart }) {
           <p className="text-gray-600 text-lg">Upload your dance video to get started</p>
 
           <div className="bg-blue-50 border-2 border-blue-300 p-6 rounded-xl shadow-md flex flex-col items-center space-y-4">
-            <label className="text-blue-500 font-semibold text-lg">
-              Upload Your Dance Video
-            </label>
-            <input 
-              type="file" 
-              onChange={handleFileUpload}
-              className="p-3 border-2 border-blue-300 rounded-lg cursor-pointer bg-white"
-            />
+            {!loading ? (
+              <>
+                <label className="text-blue-500 font-semibold text-lg">
+                  Upload Your Dance Video
+                </label>
+                <input 
+                  type="file" 
+                  onChange={handleFileUpload}
+                  className="p-3 border-2 border-blue-300 rounded-lg cursor-pointer bg-white"
+                />
+              </>
+            ) : (
+              <div className="flex flex-col items-center space-y-4">
+                <div className="loader"></div>
+                <p className="text-blue-500 font-semibold text-lg">Processing your video...</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -91,6 +106,20 @@ export default function HomePage({ onStart }) {
 
         .animate-fadeUp {
           animation: fadeUp 1.5s ease forwards;
+        }
+
+        .loader {
+          border: 5px solid #cbd5e1;
+          border-top: 5px solid #3b82f6;
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </>

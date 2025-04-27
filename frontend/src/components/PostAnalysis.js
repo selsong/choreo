@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Confetti from 'react-confetti';
 import { useWindowSize } from '@react-hook/window-size';
 
-// ——— Add this STYLE OBJECTS block ———
+// ——— STYLE OBJECTS ———
 const ui = {
   page: {
     background: '#f7f9fc',
@@ -33,7 +33,6 @@ const ui = {
   },
   buttonHover: { transform: 'scale(1.05)' },
 };
-// —————————————————————————————
 
 const PostAnalysis = ({ feedbackLog, onRestart }) => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -86,48 +85,22 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
     }
   };
 
-  useEffect(() => {
-    if (savedFrames.length > 0 && feedbackLog.length > 0) {
-      const container = document.getElementById('timeline-scroll-container');
-      const mistakeIndex = feedbackLog.findIndex(entry => !entry.feedback.includes("Perfect"));
-
-      if (mistakeIndex !== -1 && container) {
-        const frameWidth = 150;
-        container.scrollTo({
-          left: mistakeIndex * frameWidth,
-          behavior: 'smooth'
-        });
-
-        setTimeout(() => {
-          const frames = container.querySelectorAll('.timeline-frame');
-          if (frames[mistakeIndex]) {
-            frames[mistakeIndex].style.boxShadow = '0 0 20px 5px gold';
-            frames[mistakeIndex].style.transition = 'box-shadow 0.5s ease';
-            setTimeout(() => {
-              frames[mistakeIndex].style.boxShadow = '';
-            }, 1200);
-          }
-        }, 600);
-      }
-    }
-  }, [savedFrames, feedbackLog]);
-
   const humanizeFeedback = async (feedbackTexts) => {
     try {
       const prompt = `
 You are a dance coach.
-      
-      Given these feedback comments about the HOT TO GO! Chappell Roan Dance:
-      ${feedbackTexts.join("\n")}
-      
-      Write a short 2–3 sentence summary to help someone learn the dance:
-      - Talk about musicality and flow (e.g., behind the beat, stiff, smooth).
-      - Use analogies to famous dances, music, or trends. 
-      - Encourage and motivate, even for corrections.
-      - Add 2 bullet points about common mistakes made as well as analogies of how to improve so it is easier to recall. Format it so that each bullet goes on a separate line. Don't add bold or ***. 
-      
-      Be warm, modern, and concise.
-      `;
+
+Given these feedback comments about the HOT TO GO! Chappell Roan Dance:
+${feedbackTexts.join("\n")}
+
+Write a short 2–3 sentence summary to help someone learn the dance:
+- Talk about musicality and flow (e.g., behind the beat, stiff, smooth).
+- Use analogies to famous dances, music, or trends.
+- Encourage and motivate, even for corrections.
+- Add 2 bullet points about common mistakes made as well as analogies of how to improve so it is easier to recall. Format it so that each bullet goes on a separate line. Don't add bold or ***.
+
+Be warm, modern, and concise.
+`;
 
       const res = await fetch('http://localhost:5001/humanize_feedback', {
         method: 'POST',
@@ -150,35 +123,36 @@ You are a dance coach.
 
   return (
     <div style={ui.page}>
-      <div className="post-analysis" style={ui.card}>
+      <div style={ui.card}>
         <h2>Post-Dance Analysis</h2>
         <p>Great job! Here's your feedback:</p>
 
-        <ul style={{ fontSize: "18px", listStyleType: "none", padding: 0 }}>
-          <li><strong>Good Poses:</strong> {goodPercentage}%</li>
-          <li><strong>Needs Improvement:</strong> {badPercentage}% </li>
-        </ul>
+        <div className="pose-summary">
+          <p><strong>Good Poses:</strong> {goodPercentage}%</p>
+          <p><strong>Needs Improvement:</strong> {badPercentage}%</p>
+        </div>
 
         {humanizedFeedbackLog.trim() !== "" && (() => {
-  const parts = humanizedFeedbackLog.split('*').map(s => s.trim()).filter(s => s.length > 0);
-  const intro = parts[0];
-  const bullets = parts.slice(1);
+          const parts = humanizedFeedbackLog.split('*').map(s => s.trim()).filter(s => s.length > 0);
+          const intro = parts[0];
+          const bullets = parts.slice(1);
 
-  return (
-    <div className="personalized-summary">
-      <h3>Personalized Summary:</h3>
-      <p style={{ fontSize: "18px", marginBottom: "20px" }}>{intro}</p>
-      <ul style={{ fontSize: "18px", textAlign: "left", listStyleType: "disc", margin: "0 auto", width: "80%" }}>
-        {bullets.map((bullet, index) => (
-          <li key={index} style={{ marginBottom: "10px" }}>
-            {bullet}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-})()}
+          return (
+            <div className="personalized-summary">
+              <h3>Personalized Summary:</h3>
+              <p style={{ fontSize: "18px", marginBottom: "20px" }}>{intro}</p>
+              <ul style={{ fontSize: "18px", textAlign: "left", listStyleType: "disc", margin: "0 auto", width: "80%" }}>
+                {bullets.map((bullet, index) => (
+                  <li key={index} style={{ marginBottom: "10px" }}>
+                    {bullet}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
 
+        {/* Progress bar */}
         <div style={{
           display: 'flex',
           margin: '20px auto',
@@ -200,8 +174,8 @@ You are a dance coach.
           ))}
         </div>
 
-        <h3> Detailed Dance Timeline:</h3>
-
+        {/* Dance Timeline */}
+        <h3>Detailed Dance Timeline:</h3>
         <div
           id="timeline-scroll-container"
           style={{
@@ -299,6 +273,7 @@ You are a dance coach.
           ))}
         </div>
 
+        {/* Restart button */}
         <button
           onClick={onRestart}
           style={ui.button}
@@ -307,49 +282,50 @@ You are a dance coach.
         >
           Try Again
         </button>
-
-        {showSuccessModal && (
-          <>
-            <Confetti width={width} height={height} />
-            <div style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              backgroundColor: "rgba(0,0,0,0.5)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 1000,
-            }}>
-              <div style={{
-                backgroundColor: "white",
-                padding: "40px",
-                borderRadius: "12px",
-                textAlign: "center",
-                boxShadow: "0px 4px 12px rgba(0,0,0,0.2)",
-              }}>
-                <h2>🎉 Session Complete!</h2>
-                <p style={{ fontSize: "18px", margin: "20px 0" }}>
-                  Amazing work! Ready to improve even more?
-                </p>
-                <button onClick={() => setShowSuccessModal(false)} style={{
-                  padding: "10px 20px",
-                  fontSize: "16px",
-                  borderRadius: "8px",
-                  backgroundColor: "#4CAF50",
-                  color: "white",
-                  border: "none",
-                  cursor: "pointer",
-                }}>
-                  Close
-                </button>
-              </div>
-            </div>
-          </>
-        )}
       </div>
+
+      {/* Confetti and Success Modal */}
+      {showSuccessModal && (
+        <>
+          <Confetti width={width} height={height} />
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}>
+            <div style={{
+              backgroundColor: "white",
+              padding: "40px",
+              borderRadius: "12px",
+              textAlign: "center",
+              boxShadow: "0px 4px 12px rgba(0,0,0,0.2)",
+            }}>
+              <h2>🎉 Session Complete!</h2>
+              <p style={{ fontSize: "18px", margin: "20px 0" }}>
+                Amazing work! Ready to improve even more?
+              </p>
+              <button onClick={() => setShowSuccessModal(false)} style={{
+                padding: "10px 20px",
+                fontSize: "16px",
+                borderRadius: "8px",
+                backgroundColor: "#4CAF50",
+                color: "white",
+                border: "none",
+                cursor: "pointer",
+              }}>
+                Close
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

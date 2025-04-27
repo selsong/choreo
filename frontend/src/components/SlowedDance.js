@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import '../styles/DanceSession.css';
 
-const DanceSession = ({ onEnd, onPractice }) => {
+const DanceSession = ({ onEnd }) => {
   const videoRef = useRef(null);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [feedback, setFeedback] = useState("Loading...");
@@ -117,7 +117,7 @@ const DanceSession = ({ onEnd, onPractice }) => {
 
     if (videoRef.current) {
       setCountdown(3);
-  
+
       let countdownTimer = setInterval(() => {
         setCountdown(prev => {
           if (prev === 1) {
@@ -142,10 +142,13 @@ const DanceSession = ({ onEnd, onPractice }) => {
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
+  
       await fetch('http://localhost:5001/stop_processing');
       await new Promise((resolve) => setTimeout(resolve, 300));
-      await fetch('http://localhost:5001/start_processing');
+      await fetch('http://localhost:5001/start_processing?mode=slow');
+  
       videoRef.current.play();
+      videoRef.current.playbackRate = 0.5; // Slow speed
       setHasPlayedOnce(true);
       setStartTime(Date.now());
     }
@@ -156,12 +159,11 @@ const DanceSession = ({ onEnd, onPractice }) => {
       videoRef.current.pause();
     }
     await fetch('http://localhost:5001/stop_processing');
-    await fetch('http://localhost:5001/reset_feedback');
     onEnd(feedbackLog);
   };
 
   return (
-    <div className="dance-sess aura-background">
+    <div className="dance-sess">
       <h1>choreo</h1>
 
       {showStartOverlay && (
@@ -202,12 +204,12 @@ const DanceSession = ({ onEnd, onPractice }) => {
           <img
             src="http://localhost:5001/video_feed"
             alt="Dancing Live Stream"
-            width="640"
-            height="375"
+            width="1024"
+            height="600"
           />
           <div key={feedback} className={`feedback-text ${getFeedbackColorClass(feedback)}`}>
             {feedback}
-
+          </div>
         </div>
       </div>
 
@@ -219,24 +221,6 @@ const DanceSession = ({ onEnd, onPractice }) => {
         <button onClick={handleEndDance} className="end-dance-button">
           End Dance
         </button>
-
-        <button 
-          onClick={async () => {
-            await fetch('http://localhost:5001/reset_feedback');
-            onPractice(); // THEN move to practice page
-          }}
-          className="practice-button"
-        >
-          Practice in 0.5x
-        </button>
-      </div>
-      <button 
-        onClick={handleEndDance}
-        className="end-dance-button"
-        style={{ marginTop: '20px' }}
-      >
-        End Dance
-      </button>
       </div>
     </div>
   );
