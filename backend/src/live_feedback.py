@@ -49,6 +49,14 @@ def generate_frames():
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(frame_rgb)
 
+        if results.pose_landmarks:
+            mp.solutions.drawing_utils.draw_landmarks(
+                frame,
+                results.pose_landmarks,
+                mp_pose.POSE_CONNECTIONS
+            )
+
+
         feedback_text = "Waiting to Start..."
 
         if processing and start_time:

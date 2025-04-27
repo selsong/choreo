@@ -15,11 +15,16 @@ const DanceSession = ({ onEnd }) => {
     if (videoRef.current) {
       videoRef.current.addEventListener('loadeddata', () => {
         const canvas = document.getElementById('referenceCanvas');
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx && videoRef.current) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+          }
+        }
       });
     }
   }, []);
+  
 
   useEffect(() => {
     fetch('/keypoints/hot_to_go-keypoints.json')
@@ -31,27 +36,42 @@ const DanceSession = ({ onEnd }) => {
   useEffect(() => {
     let animationFrameId;
     const canvas = document.getElementById('referenceCanvas');
-    const ctx = canvas.getContext('2d');
-
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx && videoRef.current) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      }
+    }
+    
     const draw = () => {
       if (videoRef.current && groundTruth.length > 0) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const currentTime = videoRef.current.currentTime;
-        const fps = 30;
-        const frameIdx = Math.floor(currentTime * fps);
-
-        if (frameIdx >= 0 && frameIdx < groundTruth.length) {
-          const keypoints = groundTruth[frameIdx];
-          ctx.fillStyle = 'white';
-          for (const [x, y] of keypoints) {
-            ctx.beginPath();
-            ctx.arc(x * canvas.width, y * canvas.height, 5, 0, 2 * Math.PI);
-            ctx.fill();
+        const canvas = document.getElementById('referenceCanvas');
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    
+            const currentTime = videoRef.current.currentTime;
+            const fps = 30;
+            const frameIdx = Math.floor(currentTime * fps);
+    
+            if (frameIdx >= 0 && frameIdx < groundTruth.length) {
+              const keypoints = groundTruth[frameIdx];
+    
+              if (keypoints) {
+                for (const [, [x, y]] of Object.entries(keypoints)) {
+                  ctx.beginPath();
+                  ctx.arc(x * canvas.width, y * canvas.height, 5, 0, 2 * Math.PI);
+                  ctx.fill();
+                }
+              }
+            }
           }
         }
       }
       animationFrameId = requestAnimationFrame(draw);
     };
+    
 
     draw();
 
