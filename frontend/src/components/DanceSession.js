@@ -109,9 +109,16 @@ const DanceSession = ({ onEnd }) => {
   };
 
   const startOrRestartDance = async () => {
+    await fetch('http://localhost:5001/clear_saved_frames', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ really_clear: true })
+    });
+  
     if (videoRef.current) {
       setCountdown(3);
   
+      
       let countdownTimer = setInterval(() => {
         setCountdown(prev => {
           if (prev === 1) {
@@ -141,7 +148,6 @@ const DanceSession = ({ onEnd }) => {
       videoRef.current.currentTime = 0;
   
       await fetch('http://localhost:5001/stop_processing');
-      await fetch('http://localhost:5001/clear_saved_frames'); // 🧹 Clear frames before restarting!
   
       await new Promise((resolve) => setTimeout(resolve, 300));
       await fetch('http://localhost:5001/start_processing');
