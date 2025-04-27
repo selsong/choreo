@@ -14,6 +14,12 @@ load_dotenv()  # Load .env variables
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=GEMINI_API_KEY)
+import google.generativeai as genai
+from dotenv import load_dotenv
+load_dotenv()  # Load .env variables
+
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+genai.configure(api_key=GEMINI_API_KEY)
 
 # Create Flask app
 app = Flask(__name__)
@@ -71,15 +77,6 @@ def generate_frames():
             if frame_idx >= total_frames:
                 feedback_text = "Video Ended! Congrats, you're done!"
 
-                # 🛠 Auto-clear saved_frames when video ends
-                folder = 'saved_frames'
-                try:
-                    if os.path.exists(folder):
-                        shutil.rmtree(folder)
-                    os.makedirs(folder)
-                    print("saved_frames cleared automatically after session!")
-                except Exception as e:
-                    print(f'Error clearing saved_frames automatically: {e}')
 
             elif results.pose_landmarks and frame_idx < total_frames:
                 live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
@@ -182,15 +179,12 @@ def serve_saved_frame(filename):
 def clear_saved_frames():
     folder = 'saved_frames'
     try:
-        data = request.get_json()
-        if data.get("really_clear", False):  # Only clear if really_clear = True
-            if os.path.exists(folder):
-                shutil.rmtree(folder)
-            os.makedirs(folder)
-            print("✅ saved_frames manually cleared!")
-            return jsonify({"status": "cleared"}), 200
-        else:
-            return jsonify({"status": "skipped clearing"}), 200
+
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+        os.makedirs(folder)
+        print("saved_frames manually cleared!")
+        return jsonify({"status": "cleared"}), 200
     except Exception as e:
         print(f'Error manually clearing saved_frames: {e}')
         return jsonify({'error': str(e)}), 500

@@ -117,8 +117,7 @@ const DanceSession = ({ onEnd }) => {
   
     if (videoRef.current) {
       setCountdown(3);
-  
-      
+
       let countdownTimer = setInterval(() => {
         setCountdown(prev => {
           if (prev === 1) {
@@ -132,8 +131,7 @@ const DanceSession = ({ onEnd }) => {
             }, 1000);
             clearInterval(countdownTimer);
             return 1;
-            // actuallyStartDance();
-            // return null;
+
           } else {
             return prev - 1;
           }
@@ -237,10 +235,10 @@ const DanceSession = ({ onEnd }) => {
             }}
           >
             {feedback}
-          </div>
         </div>
       </div>
 
+      </div>
       <button 
         onClick={handleEndDance}
         className="end-dance-button"
