@@ -19,8 +19,6 @@ backend/venv39/
 backend/.python-version
 backend/saved_frames/
 node_modules
-package-lock.json
-package.json
 ENV/
 env/
 .env
