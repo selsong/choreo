@@ -71,16 +71,6 @@ def generate_frames():
             if frame_idx >= total_frames:
                 feedback_text = "Video Ended! Congrats, you're done!"
 
-                # 🛠 Auto-clear saved_frames when video ends
-                folder = 'saved_frames'
-                try:
-                    if os.path.exists(folder):
-                        shutil.rmtree(folder)
-                    os.makedirs(folder)
-                    print("saved_frames cleared automatically after session!")
-                except Exception as e:
-                    print(f'Error clearing saved_frames automatically: {e}')
-
             elif results.pose_landmarks and frame_idx < total_frames:
                 live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
                 ground_landmarks = ground_truth[frame_idx]
@@ -178,10 +168,11 @@ def serve_saved_frame(filename):
     folder = os.path.abspath('saved_frames')
     return send_from_directory(folder, filename)
 
-@app.route('/clear_saved_frames')
+@app.route('/clear_saved_frames', methods=['POST'])
 def clear_saved_frames():
     folder = 'saved_frames'
     try:
+
         if os.path.exists(folder):
             shutil.rmtree(folder)
         os.makedirs(folder)
@@ -190,7 +181,6 @@ def clear_saved_frames():
     except Exception as e:
         print(f'Error manually clearing saved_frames: {e}')
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/humanize_feedback', methods=['POST'])
 def humanize_feedback():
@@ -208,6 +198,7 @@ def humanize_feedback():
     except Exception as e:
         print(f"Error contacting Gemini API: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, threaded=True)
