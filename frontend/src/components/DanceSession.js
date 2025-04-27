@@ -7,6 +7,8 @@ const DanceSession = ({ onEnd }) => {
   const [feedback, setFeedback] = useState("Loading...");
   const [groundTruth, setGroundTruth] = useState([]);
   const [countdown, setCountdown] = useState(null);
+  const [showStartOverlay, setShowStartOverlay] = useState(true);
+
 
   useEffect(() => {
     if (videoRef.current) {
@@ -117,6 +119,19 @@ const DanceSession = ({ onEnd }) => {
     <div className="dance-sess aura-background">
       <h1>choreo</h1>
 
+      {showStartOverlay && (
+        <div className="start-overlay">
+          <button 
+            className="start-button" 
+            onClick={() => {
+              setShowStartOverlay(false);
+              startOrRestartDance();
+            }}
+          >
+            Start
+          </button>
+        </div>
+      )}
 
       {countdown !== null && (
         <div className="countdown-overlay">
