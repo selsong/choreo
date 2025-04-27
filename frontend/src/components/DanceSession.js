@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import '../styles/DanceSession.css';
 
 const DanceSession = ({ onEnd }) => {
   const videoRef = useRef(null);
@@ -31,7 +32,7 @@ const DanceSession = ({ onEnd }) => {
     
         if (frameIdx >= 0 && frameIdx < groundTruth.length) {
           const keypoints = groundTruth[frameIdx];
-          ctx.fillStyle = 'red';
+          ctx.fillStyle = 'white';
           for (const idx in keypoints) {
             const [x, y] = keypoints[idx];
             ctx.beginPath();
@@ -90,8 +91,8 @@ const DanceSession = ({ onEnd }) => {
   };
 
   return (
-    <div className="dance-session">
-      <h1>Choreo</h1>
+    <div className="dance-sess aura-background">
+      <h1>choreo</h1>
       <div className="video-container">
 
         {/* Reference Video + Canvas */}
@@ -102,13 +103,18 @@ const DanceSession = ({ onEnd }) => {
             src="/videos/hot_to_go.mp4"
             width="640"
             height="480"
-            style={{ display: 'none' }}
+            style={{
+              width: 'auto',
+              height: 'auto',
+              display: 'none',
+              objectFit: 'contain'
+            }}
             crossOrigin="anonymous"
           />
           <canvas
             id="referenceCanvas"
-            width="640"
-            height="480"
+            width="500"
+            height="700"
           />
           <button onClick={startOrRestartDance} style={{ marginTop: '10px' }}>
             {hasPlayedOnce ? 'Restart' : 'Play'}

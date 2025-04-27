@@ -1,0 +1,101 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  
+/* Aura background animation */
+.aura-background {
+    background: radial-gradient(circle at center, #fff4ba 10%, #a7e4cc 40%, #94c7ed 80%, #94c3fa 100%);
+    animation: auraPulse 10s ease-in-out infinite alternate;
+    min-height: 100vw; 
+    min-width: 100vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    box-sizing: border-box;
+    }
+  
+  /* Smoothly pulse the background */
+  @keyframes auraPulse {
+    0% {
+      background: radial-gradient(circle at center, #fff4ba 10%, #a7e4cc 40%, #94c7ed 80%, #94c3fa 100%);
+    }
+    100% {
+      background: radial-gradient(circle at center, #fff4ba 10%, #a7e4cc 40%, #94c7ed 80%, #94c3fa 100%);
+    }
+  }
+
+  /* Dance session container */
+  .dance-session h1 {
+    color: white;
+    font-size: 3rem;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    margin-bottom: 20px;
+  }
+  
+  /* Container for videos */
+  .video-container {
+    /* display: flex; */
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    /* width: 100%; */
+    /* max-width: 1400px; */
+  }
+  
+  /* Each video wrapper */
+  .video-wrapper {
+    background: transparent; /* keep it transparent to avoid borders */
+    padding: 10px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: none;
+  }
+    
+  /* Play/Pause and End Dance buttons */
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 30px;
+    background-color: #94c3fa;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 10px;
+  }
+  
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 150, 255, 0.7);
+  }
+  
+  /* End Dance Button */
+  .end-dance-button {
+    margin-top: 40px;
+    background: linear-gradient(135deg, #ff4e50, #f9d423);
+  }
+  
+  /* Canvas */
+  #referenceCanvas {
+    border-radius: 10px;
+    margin-top: 10px;
+  }
+  
+  /* Feedback text */
+  .video-wrapper div {
+    margin-top: 10px;
+  }
+  
