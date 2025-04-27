@@ -8,77 +8,99 @@ const DanceSession = ({ onEnd }) => {
   const [groundTruth, setGroundTruth] = useState([]);
   const [countdown, setCountdown] = useState(null);
   const [showStartOverlay, setShowStartOverlay] = useState(true);
-
+  const [feedbackLog, setFeedbackLog] = useState([]);
+  const [startTime, setStartTime] = useState(null);
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.addEventListener('loadeddata', () => {
-        // Force draw the first frame once it's ready
         const canvas = document.getElementById('referenceCanvas');
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx && videoRef.current) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+          }
+        }
       });
     }
   }, []);
   
 
-  // Load keypoints JSON
   useEffect(() => {
-    fetch('/keypoints/hot_to_go-keypoints.json') // Copy keypoints to frontend/public/keypoints/
+    fetch('/keypoints/hot_to_go-keypoints.json')
       .then(res => res.json())
       .then(data => setGroundTruth(data))
       .catch(err => console.error("Error loading keypoints:", err));
   }, []);
 
-
-  // Draw video + keypoints onto canvas
   useEffect(() => {
     let animationFrameId;
     const canvas = document.getElementById('referenceCanvas');
-    const ctx = canvas.getContext('2d');
-
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx && videoRef.current) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      }
+    }
+    
     const draw = () => {
       if (videoRef.current && groundTruth.length > 0) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        const canvas = document.getElementById('referenceCanvas');
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
     
-        const currentTime = videoRef.current.currentTime;
-        const fps = 30; // set manually to your video's frame rate
-        const frameIdx = Math.floor(currentTime * fps);
+            const currentTime = videoRef.current.currentTime;
+            const fps = 30;
+            const frameIdx = Math.floor(currentTime * fps);
     
-        if (frameIdx >= 0 && frameIdx < groundTruth.length) {
-          const keypoints = groundTruth[frameIdx];
-          ctx.fillStyle = 'white';
-          for (const idx in keypoints) {
-            const [x, y] = keypoints[idx];
-            ctx.beginPath();
-            ctx.arc(x * canvas.width, y * canvas.height, 5, 0, 2 * Math.PI);
-            ctx.fill();
+            if (frameIdx >= 0 && frameIdx < groundTruth.length) {
+              const keypoints = groundTruth[frameIdx];
+    
+              if (keypoints) {
+                for (const [, [x, y]] of Object.entries(keypoints)) {
+                  ctx.beginPath();
+                  ctx.arc(x * canvas.width, y * canvas.height, 5, 0, 2 * Math.PI);
+                  ctx.fill();
+                }
+              }
+            }
           }
         }
       }
       animationFrameId = requestAnimationFrame(draw);
     };
+    
 
     draw();
 
     return () => cancelAnimationFrame(animationFrameId);
   }, [groundTruth]);
 
-  // Fetch feedback from server
   useEffect(() => {
+    if (!startTime) {
+      setStartTime(Date.now());
+    }
+
     const interval = setInterval(() => {
       fetch('http://localhost:5001/feedback')
         .then(res => res.json())
         .then(data => {
           if (data.feedback !== feedback) {
             setFeedback(data.feedback);
+            const elapsed = (Date.now() - startTime) / 1000;
+            setFeedbackLog(prev => [...prev, {
+              time: Math.round(elapsed),
+              feedback: data.feedback
+            }]);
           }
         })
         .catch(err => console.error("Error fetching feedback:", err));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [feedback]);
+  }, [feedback, startTime]);
 
   const getFeedbackColor = (feedback) => {
     if (feedback.includes("Perfect")) return "green";
@@ -103,6 +125,8 @@ const DanceSession = ({ onEnd }) => {
             }, 1000);
             clearInterval(countdownTimer);
             return 1;
+            // actuallyStartDance();
+            // return null;
           } else {
             return prev - 1;
           }
@@ -112,15 +136,29 @@ const DanceSession = ({ onEnd }) => {
   };
 
   const actuallyStartDance = async () => {
-    videoRef.current.pause();
-    videoRef.current.currentTime = 0;
-    await fetch('http://localhost:5001/stop_processing');
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    await fetch('http://localhost:5001/start_processing');
-    videoRef.current.play();
-    setHasPlayedOnce(true);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+  
+      await fetch('http://localhost:5001/stop_processing');
+      await fetch('http://localhost:5001/clear_saved_frames'); // 🧹 Clear frames before restarting!
+  
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await fetch('http://localhost:5001/start_processing');
+  
+      videoRef.current.play();
+      setHasPlayedOnce(true);
+      setStartTime(Date.now()); // Reset start time for fresh feedback logging
+    }
   };
 
+  const handleEndDance = async () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+    await fetch('http://localhost:5001/stop_processing');
+    onEnd(feedbackLog); // Pass feedback log
+  };
 
   return (
     <div className="dance-sess aura-background">
@@ -149,8 +187,6 @@ const DanceSession = ({ onEnd }) => {
       )}
 
       <div className="video-container">
-
-        {/* Reference Video + Canvas */}
         <div className="video-wrapper">
           <h2>Reference Video with Keypoints</h2>
           <video
@@ -177,7 +213,6 @@ const DanceSession = ({ onEnd }) => {
           </button>
         </div>
 
-        {/* Live Webcam Stream */}
         <div className="video-wrapper">
           <h2>Live Feedback</h2>
           <img
@@ -198,17 +233,12 @@ const DanceSession = ({ onEnd }) => {
             {feedback}
           </div>
         </div>
-
       </div>
+
       <button 
-        onClick={async () => {
-          await fetch('http://localhost:5001/reset_feedback');
-          const res = await fetch('http://localhost:5001/feedback'); // Immediately get fresh feedback
-          const data = await res.json();
-          setFeedback(data.feedback); // Update it right away
-          onEnd();  // THEN switch page
-        }} 
+        onClick={handleEndDance}
         className="end-dance-button"
+        style={{ marginTop: '20px' }}
       >
         End Dance
       </button>
