@@ -109,15 +109,9 @@ const DanceSession = ({ onEnd }) => {
   };
 
   const startOrRestartDance = async () => {
-    await fetch('http://localhost:5001/clear_saved_frames', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ really_clear: true })
-    });
-  
     if (videoRef.current) {
       setCountdown(3);
-
+  
       let countdownTimer = setInterval(() => {
         setCountdown(prev => {
           if (prev === 1) {
@@ -131,7 +125,6 @@ const DanceSession = ({ onEnd }) => {
             }, 1000);
             clearInterval(countdownTimer);
             return 1;
-
           } else {
             return prev - 1;
           }
@@ -146,6 +139,7 @@ const DanceSession = ({ onEnd }) => {
       videoRef.current.currentTime = 0;
   
       await fetch('http://localhost:5001/stop_processing');
+      await fetch('http://localhost:5001/clear_saved_frames'); // 🧹 Clear frames before restarting!
   
       await new Promise((resolve) => setTimeout(resolve, 300));
       await fetch('http://localhost:5001/start_processing');
@@ -165,7 +159,7 @@ const DanceSession = ({ onEnd }) => {
   };
 
   return (
-    <div className="dance-sess">
+    <div className="dance-sess aura-background">
       <h1>choreo</h1>
 
       {showStartOverlay && (
@@ -212,6 +206,9 @@ const DanceSession = ({ onEnd }) => {
             width="380"
             height="640"
           />
+          <button onClick={startOrRestartDance} style={{ marginTop: '10px' }}>
+            {hasPlayedOnce ? 'Restart' : 'Play'}
+          </button>
         </div>
 
         <div className="video-wrapper">
@@ -219,39 +216,31 @@ const DanceSession = ({ onEnd }) => {
           <img
             src="http://localhost:5001/video_feed"
             alt="Dancing Live Stream"
-            width="1024"
-            height="600"
+            width="640"
+            height="375"
           />
           <div 
-            key={feedback}
-            className={`feedback-text ${
-              feedback.includes("Perfect") 
-                ? "feedback-perfect"
-                : feedback.includes("Pose Not Detected") 
-                ? "feedback-neutral"
-                : "feedback-warning"
-            }`}
+            key={feedback} 
+            className="feedback-text" 
+            style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: getFeedbackColor(feedback)
+            }}
           >
             {feedback}
-          </div>
+
         </div>
       </div>
 
-      <div className="button-row">
-        <button 
-          onClick={startOrRestartDance} 
-          className="restart-button"
-        >
-          {hasPlayedOnce ? 'Restart' : 'Play'}
-        </button>
-
-        <button 
-          onClick={handleEndDance}
-          className="end-dance-button"
-        >
-          End Dance
-        </button>
       </div>
+      <button 
+        onClick={handleEndDance}
+        className="end-dance-button"
+        style={{ marginTop: '20px' }}
+      >
+        End Dance
+      </button>
     </div>
   );
 };

@@ -57,13 +57,14 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
       const prompt = `
       You are a dance coach.
       
-      Given these feedback comments about the Hottogo Chappell Roan Dance:
+      Given these feedback comments about the HOT TO GO! Chappell Roan Dance:
       ${feedbackTexts.join("\n")}
       
-      Write a short 3–5 sentence summary to help someone learn the dance:
+      Write a short 2–3 sentence summary to help someone learn the dance:
       - Talk about musicality and flow (e.g., behind the beat, stiff, smooth).
       - Use analogies to famous dances, music, or trends. 
       - Encourage and motivate, even for corrections.
+      - Add 2 bullet points about common mistakes made as well as analogies of how to improve so it is easier to recall. Format it so that each bullet goes on a separate line. Don't add bold or ***. 
       
       Be warm, modern, and concise.
       `;
@@ -86,24 +87,38 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
   
 
   return (
-    <div className="post-analysis" style={{ textAlign: "center", padding: "20px" }}>
-      <h2>📈 Post-Dance Analysis</h2>
+    <div className="post-analysis dance-sess">
+      <h2>Post-Dance Analysis</h2>
       <p>Great job! Here's your feedback:</p>
 
-      <ul style={{ fontSize: "18px", listStyleType: "none", padding: 0 }}>
-        <li><strong>Good Poses:</strong> {goodPercentage}% ✅</li>
-        <li><strong>Needs Improvement:</strong> {badPercentage}% ⚠️</li>
+      <ul>
+        <li><strong>Good Poses:</strong> {goodPercentage}% </li>
+        <li><strong>Needs Improvement:</strong> {badPercentage}% </li>
       </ul>
 
-      {humanizedFeedbackLog.trim() !== "" && (
-  <div style={{ fontSize: "18px", margin: "20px auto", width: "80%", color: "#555" }}>
-    <h3>🌟 Dance Vibe Summary:</h3>
-    <p>{humanizedFeedbackLog}</p>
-  </div>
-)}
+      {humanizedFeedbackLog.trim() !== "" && (() => {
+  const parts = humanizedFeedbackLog.split('*').map(s => s.trim()).filter(s => s.length > 0);
+  const intro = parts[0];
+  const bullets = parts.slice(1);
+
+  return (
+    <div className="personalized-summary">
+      <h3>Personalized Summary:</h3>
+      <p style={{ fontSize: "18px", marginBottom: "20px" }}>{intro}</p>
+      <ul style={{ fontSize: "18px", textAlign: "left", listStyleType: "disc", margin: "0 auto", width: "80%" }}>
+        {bullets.map((bullet, index) => (
+          <li key={index} style={{ marginBottom: "10px" }}>
+            {bullet}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+})()}
+
 
       {/* Timeline */}
-      <div style={{ display: 'flex', margin: '20px auto', width: '80%', height: '20px', backgroundColor: '#eee', borderRadius: '10px', overflow: 'hidden' }}>
+      <div className="timeline-bar">
         {timelineSegments.map(segment => (
           <div
             key={segment.key}
@@ -117,8 +132,8 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
       </div>
 
       {/* Detailed feedback */}
-      <h3>📝 Detailed Feedback with Screenshots:</h3>
-      <ul style={{ textAlign: "left", margin: "0 auto", width: "80%" }}>
+      <h3>Review my Moves</h3>
+      <ul className="move-review-list">
         {feedbackLog.map((entry, index) => (
           <li key={index} style={{ marginBottom: "20px" }}>
           {/* {(humanizedFeedbackLog.length > 0 ? humanizedFeedbackLog : feedbackLog).map((entry, index) => (
