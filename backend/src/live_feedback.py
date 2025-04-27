@@ -1,4 +1,4 @@
-from flask import Flask, Response, jsonify, send_from_directory
+from flask import Flask, Response, jsonify, send_from_directory, request
 import os
 import shutil
 import cv2
@@ -8,6 +8,12 @@ import json
 import threading
 import time
 from flask_cors import CORS
+import google.generativeai as genai
+from dotenv import load_dotenv
+load_dotenv()  # Load .env variables
+
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+genai.configure(api_key=GEMINI_API_KEY)
 
 # Create Flask app
 app = Flask(__name__)
@@ -64,7 +70,6 @@ def generate_frames():
 
             if frame_idx >= total_frames:
                 feedback_text = "Video Ended! Congrats, you're done!"
-
 
             elif results.pose_landmarks and frame_idx < total_frames:
                 live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
@@ -167,18 +172,32 @@ def serve_saved_frame(filename):
 def clear_saved_frames():
     folder = 'saved_frames'
     try:
-        data = request.get_json()
-        if data.get("really_clear", False):  # Only clear if really_clear = True
-            if os.path.exists(folder):
-                shutil.rmtree(folder)
-            os.makedirs(folder)
-            print("✅ saved_frames manually cleared!")
-            return jsonify({"status": "cleared"}), 200
-        else:
-            return jsonify({"status": "skipped clearing"}), 200
+
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+        os.makedirs(folder)
+        print("saved_frames manually cleared!")
+        return jsonify({"status": "cleared"}), 200
     except Exception as e:
-        print(f'❌ Error manually clearing saved_frames: {e}')
+        print(f'Error manually clearing saved_frames: {e}')
         return jsonify({'error': str(e)}), 500
+
+@app.route('/humanize_feedback', methods=['POST'])
+def humanize_feedback():
+    user_prompt = request.json.get('prompt')
+
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')  # or 'gemini-2.0' depending what you want
+        response = model.generate_content(user_prompt)
+
+        if response and hasattr(response, 'text'):
+            return jsonify({"humanizedFeedback": response.text})
+        else:
+            return jsonify({"error": "Invalid response from Gemini."}), 500
+
+    except Exception as e:
+        print(f"Error contacting Gemini API: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
