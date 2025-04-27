@@ -1,269 +1,222 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  html, body {
-    height: 100%;
-    width: 100%;
-    overflow-x: hidden;
-    margin: 0;
-    padding: 0;
-  }
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  
-/* Aura background animation */
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+}
+
 .aura-background {
+  background: radial-gradient(circle at center, #fff4ba 10%, #a7e4cc 40%, #94c7ed 80%, #94c3fa 100%);
+  animation: auraPulse 10s ease-in-out infinite alternate;
+  min-height: 100vh;
+  min-width: 100vw;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+  box-sizing: border-box;
+}
+
+@keyframes auraPulse {
+  0%, 100% {
     background: radial-gradient(circle at center, #fff4ba 10%, #a7e4cc 40%, #94c7ed 80%, #94c3fa 100%);
-    animation: auraPulse 10s ease-in-out infinite alternate;
-    min-height: 100vh; 
-    min-width: 100vw;
-    overflow-x: hidden;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 30px 20px;
-    box-sizing: border-box;
-    }
-  
-  /* Smoothly pulse the background */
-  @keyframes auraPulse {
-    0% {
-      background: radial-gradient(circle at center, #fff4ba 10%, #a7e4cc 40%, #94c7ed 80%, #94c3fa 100%);
-    }
-    100% {
-      background: radial-gradient(circle at center, #fff4ba 10%, #a7e4cc 40%, #94c7ed 80%, #94c3fa 100%);
-    }
   }
+}
 
-  /* Dance session container */
-  .dance-session h1 {
-    color: white;
-    font-size: 3rem;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-    margin-bottom: 20px;
-  }
+.dance-sess h1 {
+  color: #3B82F6;
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
 
-  .dance-sess {
-    animation: fadeInPage 1s ease;
-  }
-  
-  @keyframes fadeInPage {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  
-  /* Container for videos */
-  .video-container {
-    /* display: flex; */
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 40px;
-    /* width: 100%; */
-    /* max-width: 1400px; */
-  }
-  
-  /* Each video wrapper */
-  .video-wrapper {
-    background: transparent; /* keep it transparent to avoid borders */
-    padding: 10px;
-    border-radius: 20px;
-    text-align: center;
-    box-shadow: none;
-  }
+.dance-sess {
+  animation: fadeInPage 1s ease;
+}
 
-  .video-wrapper img,
-#referenceCanvas {
+@keyframes fadeInPage {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.video-container {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  display: flex;
+}
+
+.video-wrapper {
+  background: transparent;
+  padding: 10px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: none;
+}
+
+.video-wrapper h2 {
+  color: #3B82F6;
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.video-wrapper img, #referenceCanvas {
   border-radius: 20px;
   box-shadow: 0 0 20px rgba(255, 255, 255, 1);
 }
-    
-  /* Play/Pause and End Dance buttons */
-  button:not(.restart-button):not(.end-dance-button) {
-    padding: 10px 20px;
-    /* ... */
-  }
-  
-  button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(255, 150, 255, 0.7);
-  }
-  /* Canvas */
-  #referenceCanvas {
-    border-radius: 20px;
-  }
-  
-  .video-wrapper .feedback-text {
-    margin-top: 20px;
-  }
-  
-  .countdown-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    font-size: 10rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  }
-  
-  .countdown-number {
-    font-size: 10rem;
-    animation: pop 1s ease forwards;
-    color: white;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-  
-  @keyframes pop {
-    0% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(1.5);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(0.8);
-      opacity: 0;
-    }
-  }
 
-  
-  .start-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;
-    background: rgba(0, 0, 0, 0.8); /* dark overlay */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9998; /* just below countdown if needed */
-  }
-  
-  .start-button {
-    padding: 20px 40px;
-    font-size: 2rem;
-    border-radius: 20px;
-    background-color: #94c3fa;
-    color: white;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .start-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-  }
-  
-  .feedback-text {
-    animation: fadeIn 0.5s ease;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
-  }
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 150, 255, 0.7);
+}
 
-  .button-row {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 30px;
-  }
-  
-  .restart-button {
-    padding: 15px 30px;
-    font-size: 1.5rem;
-    border: none;
-    border-radius: 20px;
-    background-color: #4CAF50; /* Green */
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    line-height: 1;
-  }
-  
-  .restart-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(144, 238, 144, 0.7);
-  }
-  
-  .end-dance-button {
-    padding: 15px 30px;
-    font-size: 1.5rem;
-    border: none;
-    border-radius: 20px;
-    background-color: #f44336; /* Red */
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    line-height: 1;
-  }
-  
-  .end-dance-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(255, 100, 100, 0.7);
-  }
-  
-  .feedback-text {
-    margin-top: 20px;
-    padding: 15px 25px;
-    border-radius: 18px;
-    font-size: 1.8rem;
-    font-weight: 600;
-    text-align: center;
-    color: white;
-    font-family: 'Poppins', 'Helvetica Neue', sans-serif;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
-    animation: fadeAndPop 0.5s ease;
-    transition: background-color 0.5s, box-shadow 0.5s, transform 0.5s;
-  }
-  
-  /* Pastel solid colors */
-  .feedback-perfect {
-    background-color: #a8e6cf; /* Soft mint green */
-    box-shadow: 0 0 20px rgba(168, 230, 207, 0.7);
-  }
-  
-  .feedback-warning {
-    background-color: #ffd3b6; /* Soft peach */
-    box-shadow: 0 0 20px rgba(255, 211, 182, 0.7);
-  }
-  
-  .feedback-neutral {
-    background-color: #dfe9f3; /* Soft cloudy blue */
-    box-shadow: 0 0 20px rgba(223, 233, 243, 0.7);
-  }
-  
-  @keyframes fadeAndPop {
-    0% {
-      opacity: 0;
-      transform: scale(0.9);
-    }
-    50% {
-      opacity: 1;
-      transform: scale(1.05);
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-  
+#referenceCanvas {
+  border-radius: 20px;
+}
+
+.countdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 10rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.countdown-number {
+  font-size: 10rem;
+  animation: pop 1s ease forwards;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+
+.start-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9998;
+}
+
+.start-button {
+  padding: 20px 40px;
+  font-size: 2rem;
+  border-radius: 20px;
+  background-color: #94c3fa;
+  color: white;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.start-button:hover {
+  transform: scale(1.1);
+  background-color: white;
+  color: #94c3fa;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+}
+
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.restart-button,
+.end-dance-button {
+  padding: 15px 35px;
+  font-size: 1.5rem;
+  border: none;
+  border-radius: 30px;
+  background-color: #3B82F6;
+  color: white;
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.restart-button:hover,
+.end-dance-button:hover {
+  transform: scale(1.08);
+  background-color: #60a5fa;
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+}
+
+.end-dance-button {
+  background-color: #f43f5e;
+}
+
+.end-dance-button:hover {
+  background-color: #fb7185;
+}
+
+.feedback-text {
+  margin-top: 20px;
+  padding: 15px 25px;
+  border-radius: 18px;
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-align: center;
+  color: white;
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  animation: fadeAndPop 0.5s ease;
+  transition: background-color 0.5s, box-shadow 0.5s, transform 0.5s;
+}
+
+.feedback-perfect {
+  background-color: #4CAF50;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.7);
+}
+
+.feedback-warning {
+  background-color: #FF9800;
+  box-shadow: 0 0 20px rgba(255, 152, 0, 0.7);
+}
+
+.feedback-neutral {
+  background-color: #F44336;
+  box-shadow: 0 0 20px rgba(244, 67, 54, 0.7);
+}
+
+@keyframes fadeAndPop {
+  0% { opacity: 0; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
