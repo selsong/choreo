@@ -1,9 +1,9 @@
-// Updated DanceSession.js
+// Fixed SuperShy.js (based on your DanceSession.js but fully corrected)
 
 import React, { useRef, useEffect, useState } from 'react';
 import '../styles/DanceSession.css';
 
-const DanceSession = ({ onEnd }) => {
+const SuperShy = ({ onEnd, onPractice }) => {
   const videoRef = useRef(null);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [feedback, setFeedback] = useState("Loading...");
@@ -14,21 +14,46 @@ const DanceSession = ({ onEnd }) => {
   const [startTime, setStartTime] = useState(null);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.addEventListener('loadeddata', () => {
-        const canvas = document.getElementById('referenceCanvas');
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          if (ctx && videoRef.current) {
-            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    let animationFrameId;
+    const video = videoRef.current;
+    const canvas = document.getElementById('referenceCanvas');
+    const ctx = canvas?.getContext('2d');
+  
+    const draw = () => {
+      if (video && video.readyState >= 2 && groundTruth.length > 0 && ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+        const currentTime = video.currentTime;
+        const fps = 30;
+        const frameIdx = Math.floor(currentTime * fps);
+  
+        if (frameIdx >= 0 && frameIdx < groundTruth.length) {
+          const keypoints = groundTruth[frameIdx];
+  
+          for (const [, [x, y]] of Object.entries(keypoints)) {
+            ctx.beginPath();
+            ctx.arc(x * canvas.width, y * canvas.height, 5, 0, 2 * Math.PI);
+            ctx.fill();
           }
         }
+      }
+      animationFrameId = requestAnimationFrame(draw);
+    };
+  
+    if (video) {
+      video.addEventListener('play', () => {
+        draw(); // Only draw after video starts playing
       });
     }
-  }, []);
+  
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (video) video.removeEventListener('play', draw);
+    };
+  }, [groundTruth]);
 
   useEffect(() => {
-    fetch('/keypoints/hot_to_go-keypoints.json')
+    fetch('/keypoints/super_shy-keypoints.json')
       .then(res => res.json())
       .then(data => setGroundTruth(data))
       .catch(err => console.error("Error loading keypoints:", err));
@@ -37,34 +62,25 @@ const DanceSession = ({ onEnd }) => {
   useEffect(() => {
     let animationFrameId;
     const canvas = document.getElementById('referenceCanvas');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx && videoRef.current) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      }
-    }
 
     const draw = () => {
-      if (videoRef.current && groundTruth.length > 0) {
-        const canvas = document.getElementById('referenceCanvas');
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      if (canvas && videoRef.current && groundTruth.length > 0) {
+        const ctx = canvas.getContext('2d');
+        if (ctx && videoRef.current.readyState >= 2) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-            const currentTime = videoRef.current.currentTime;
-            const fps = 30;
-            const frameIdx = Math.floor(currentTime * fps);
+          const currentTime = videoRef.current.currentTime;
+          const fps = 30;
+          const frameIdx = Math.floor(currentTime * fps);
 
-            if (frameIdx >= 0 && frameIdx < groundTruth.length) {
-              const keypoints = groundTruth[frameIdx];
-
-              if (keypoints) {
-                for (const [, [x, y]] of Object.entries(keypoints)) {
-                  ctx.beginPath();
-                  ctx.arc(x * canvas.width, y * canvas.height, 5, 0, 2 * Math.PI);
-                  ctx.fill();
-                }
+          if (frameIdx >= 0 && frameIdx < groundTruth.length) {
+            const keypoints = groundTruth[frameIdx];
+            if (keypoints) {
+              for (const [, [x, y]] of Object.entries(keypoints)) {
+                ctx.beginPath();
+                ctx.arc(x * canvas.width, y * canvas.height, 5, 0, 2 * Math.PI);
+                ctx.fill();
               }
             }
           }
@@ -74,15 +90,11 @@ const DanceSession = ({ onEnd }) => {
     };
 
     draw();
-
     return () => cancelAnimationFrame(animationFrameId);
   }, [groundTruth]);
 
   useEffect(() => {
-    if (!startTime) {
-      setStartTime(Date.now());
-    }
-
+    if (!startTime) setStartTime(Date.now());
     const interval = setInterval(() => {
       fetch('http://localhost:5001/feedback')
         .then(res => res.json())
@@ -98,7 +110,6 @@ const DanceSession = ({ onEnd }) => {
         })
         .catch(err => console.error("Error fetching feedback:", err));
     }, 1000);
-
     return () => clearInterval(interval);
   }, [feedback, startTime]);
 
@@ -109,15 +120,9 @@ const DanceSession = ({ onEnd }) => {
   };
 
   const startOrRestartDance = async () => {
-    await fetch('http://localhost:5001/clear_saved_frames', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ really_clear: true })
-    });
-
+    await fetch('http://localhost:5001/clear_saved_frames', { method: 'POST' });
     if (videoRef.current) {
       setCountdown(3);
-
       let countdownTimer = setInterval(() => {
         setCountdown(prev => {
           if (prev === 1) {
@@ -142,13 +147,10 @@ const DanceSession = ({ onEnd }) => {
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
-  
       await fetch('http://localhost:5001/stop_processing');
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await fetch('http://localhost:5001/start_processing?mode=slow');
-  
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await fetch('http://localhost:5001/start_processing');
       videoRef.current.play();
-      videoRef.current.playbackRate = 0.5; // Slow speed
       setHasPlayedOnce(true);
       setStartTime(Date.now());
     }
@@ -159,6 +161,7 @@ const DanceSession = ({ onEnd }) => {
       videoRef.current.pause();
     }
     await fetch('http://localhost:5001/stop_processing');
+    await fetch('http://localhost:5001/reset_feedback');
     onEnd(feedbackLog);
   };
 
@@ -171,17 +174,13 @@ const DanceSession = ({ onEnd }) => {
           <button className="start-button" onClick={() => {
             setShowStartOverlay(false);
             startOrRestartDance();
-          }}>
-            Start
-          </button>
+          }}>Start</button>
         </div>
       )}
 
       {countdown !== null && (
         <div className="countdown-overlay">
-          <div key={countdown} className="countdown-number">
-            {countdown}
-          </div>
+          <div key={countdown} className="countdown-number">{countdown}</div>
         </div>
       )}
 
@@ -190,40 +189,35 @@ const DanceSession = ({ onEnd }) => {
           <h2>Reference Dance Video</h2>
           <video
             ref={videoRef}
-            src="/videos/hot_to_go.mp4"
+            src="/videos/super_shy.mp4"
             width="1024"
             height="768"
             style={{ width: 0, height: 0, opacity: 0, position: 'absolute', pointerEvents: 'none' }}
             crossOrigin="anonymous"
           />
-          <canvas id="referenceCanvas" width="380" height="640" />
+          <canvas id="referenceCanvas" width="640" height="480" />
         </div>
 
         <div className="video-wrapper">
           <h2>Your Live Moves</h2>
-          <img
-            src="http://localhost:5001/video_feed"
-            alt="Dancing Live Stream"
-            width="1024"
-            height="600"
-          />
-          <div key={feedback} className={`feedback-text ${getFeedbackColorClass(feedback)}`}>
-            {feedback}
-          </div>
+          <img src="http://localhost:5001/video_feed" alt="Dancing Live Stream" width="1024" height="600" />
+          <div key={feedback} className={`feedback-text ${getFeedbackColorClass(feedback)}`}>{feedback}</div>
         </div>
       </div>
 
       <div className="button-row">
-        <button onClick={startOrRestartDance} className="restart-button">
-          {hasPlayedOnce ? 'Restart' : 'Play'}
-        </button>
-
-        <button onClick={handleEndDance} className="end-dance-button">
-          End Dance
-        </button>
+        <button onClick={startOrRestartDance} className="restart-button">{hasPlayedOnce ? 'Restart' : 'Play'}</button>
+        <button onClick={handleEndDance} className="end-dance-button">End Dance</button>
+        <button 
+          onClick={async () => {
+            await fetch('http://localhost:5001/reset_feedback');
+            onPractice();
+          }}
+          className="practice-button"
+        >Practice in 0.5x</button>
       </div>
     </div>
   );
 };
 
-export default DanceSession;
+export default SuperShy;

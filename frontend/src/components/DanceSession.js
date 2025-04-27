@@ -161,7 +161,7 @@ const DanceSession = ({ onEnd, onPractice }) => {
   };
 
   return (
-    <div className="dance-sess aura-background">
+    <div className="dance-sess">
       <h1>choreo</h1>
 
       {showStartOverlay && (
@@ -189,8 +189,8 @@ const DanceSession = ({ onEnd, onPractice }) => {
           <video
             ref={videoRef}
             src="/videos/hot_to_go.mp4"
-            width="640"
-            height="480"
+            width="1024"
+            height="768"
             style={{ width: 0, height: 0, opacity: 0, position: 'absolute', pointerEvents: 'none' }}
             crossOrigin="anonymous"
           />
@@ -202,8 +202,8 @@ const DanceSession = ({ onEnd, onPractice }) => {
           <img
             src="http://localhost:5001/video_feed"
             alt="Dancing Live Stream"
-            width="640"
-            height="375"
+            width="1024"
+            height="600"
           />
           <div key={feedback} className={`feedback-text ${getFeedbackColorClass(feedback)}`}>
             {feedback}
@@ -230,13 +230,6 @@ const DanceSession = ({ onEnd, onPractice }) => {
           Practice in 0.5x
         </button>
       </div>
-      <button 
-        onClick={handleEndDance}
-        className="end-dance-button"
-        style={{ marginTop: '20px' }}
-      >
-        End Dance
-      </button>
       </div>
     </div>
   );

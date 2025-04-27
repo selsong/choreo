@@ -25,6 +25,8 @@ os.makedirs('saved_frames', exist_ok=True)
 # Load saved keypoints
 with open('./keypoints/hot_to_go-keypoints.json', 'r') as f:
     ground_truth = json.load(f)
+# with open('./keypoints/super_shy-keypoints.json', 'r') as f:
+#     ground_truth = json.load(f)
 
 print(f"Loaded ground truth frames: {len(ground_truth)}")
 
