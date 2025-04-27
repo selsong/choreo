@@ -150,90 +150,113 @@ button:hover {
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
 }
 
-  .button-row {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 30px;
-  }
-  
-  .restart-button {
-    padding: 15px 30px;
-    font-size: 1.5rem;
-    border: none;
-    border-radius: 20px;
-    background-color: #4CAF50; /* Green */
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    line-height: 1;
-  }
-  
-  .restart-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(144, 238, 144, 0.7);
-  }
-  
-  .end-dance-button {
-    padding: 15px 30px;
-    font-size: 1.5rem;
-    border: none;
-    border-radius: 20px;
-    background-color: #f44336; /* Red */
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    line-height: 1;
-  }
-  
-  .end-dance-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(255, 100, 100, 0.7);
-  }
-  
-  .feedback-text {
-    margin-top: 20px;
-    padding: 15px 25px;
-    border-radius: 18px;
-    font-size: 1.8rem;
-    font-weight: 600;
-    text-align: center;
-    color: white;
-    font-family: 'Poppins', 'Helvetica Neue', sans-serif;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
-    animation: fadeAndPop 0.5s ease;
-    transition: background-color 0.5s, box-shadow 0.5s, transform 0.5s;
-  }
-  
-  /* Pastel solid colors */
-  .feedback-perfect {
-    background-color: #a8e6cf; /* Soft mint green */
-    box-shadow: 0 0 20px rgba(168, 230, 207, 0.7);
-  }
-  
-  .feedback-warning {
-    background-color: #ffd3b6; /* Soft peach */
-    box-shadow: 0 0 20px rgba(255, 211, 182, 0.7);
-  }
-  
-  .feedback-neutral {
-    background-color: #dfe9f3; /* Soft cloudy blue */
-    box-shadow: 0 0 20px rgba(223, 233, 243, 0.7);
-  }
-  
-  @keyframes fadeAndPop {
-    0% {
-      opacity: 0;
-      transform: scale(0.9);
-    }
-    50% {
-      opacity: 1;
-      transform: scale(1.05);
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-  
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.restart-button,
+.end-dance-button {
+  padding: 15px 35px;
+  font-size: 1.5rem;
+  border: none;
+  border-radius: 30px;
+  background-color: #3B82F6;
+  color: white;
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.restart-button:hover,
+.end-dance-button:hover {
+  transform: scale(1.08);
+  background-color: #60a5fa;
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+}
+
+.end-dance-button {
+  background-color: #f43f5e;
+}
+
+.end-dance-button:hover {
+  background-color: #fb7185;
+}
+
+.feedback-text {
+  margin-top: 20px;
+  padding: 15px 25px;
+  border-radius: 18px;
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-align: center;
+  color: white;
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  animation: fadeAndPop 0.5s ease;
+  transition: background-color 0.5s, box-shadow 0.5s, transform 0.5s;
+}
+
+.feedback-perfect {
+  background-color: #4CAF50;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.7);
+}
+
+.feedback-warning {
+  background-color: #FF9800;
+  box-shadow: 0 0 20px rgba(255, 152, 0, 0.7);
+}
+
+.feedback-neutral {
+  background-color: #F44336;
+  box-shadow: 0 0 20px rgba(244, 67, 54, 0.7);
+}
+
+@keyframes fadeAndPop {
+  0% { opacity: 0; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.post-analysis {
+  background: white;
+  min-height: 100vh;
+  min-width: 100vw; 
+  color: #0057b8; /* strong blue but still readable */
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  animation: fadeInPage 1s ease;
+}
+
+.post-analysis h2, .post-analysis h3 {
+  color: #0057b8;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.post-analysis p, .post-analysis li {
+  font-size: 18px;
+  color: #003366; /* slightly deeper blue for details */
+  line-height: 1.6;
+}
+
+.post-analysis ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin: 20px auto;
+  max-width: 800px;
+}
+
+.post-analysis li {
+  margin-bottom: 15px;
+}
