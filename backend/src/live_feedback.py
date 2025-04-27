@@ -1,5 +1,6 @@
 from flask import Flask, Response, jsonify, send_from_directory
 import os
+import shutil
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -7,7 +8,6 @@ import json
 import threading
 import time
 from flask_cors import CORS
-import shutil  # add this import at the top if not there
 
 # Create Flask app
 app = Flask(__name__)
@@ -32,41 +32,32 @@ frame_idx = 0
 latest_feedback = "Pose Not Detected"
 lock = threading.Lock()
 processing = False
-
-last_saved_time = 0  # Track frame save timing
-
-def calculate_pose_distance(ground_landmarks, live_landmarks):
-    distances = []
-    for idx in ground_landmarks.keys():
-        ground_point = np.array(ground_landmarks[idx][:2])
-        live_point = np.array(live_landmarks[idx][:2])
-        dist = np.linalg.norm(ground_point - live_point)
-        distances.append(dist)
-    return np.mean(distances)
+last_saved_time = 0
+start_time = None
 
 def generate_frames():
-    global frame_idx, latest_feedback, last_saved_time
+    global frame_idx, latest_feedback, last_saved_time, start_time
+    fps = 30
+    total_frames = len(ground_truth)
+
     while True:
         success, frame = cap.read()
         if not success:
             continue
 
         frame = cv2.flip(frame, 1)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose.process(frame_rgb)
 
-        if processing:
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = pose.process(frame_rgb)
+        feedback_text = "Waiting to Start..."
 
-            feedback_text = "Pose Not Detected"
+        if processing and start_time:
+            elapsed_time = time.time() - start_time
+            frame_idx = int(elapsed_time * fps)
 
-            if results.pose_landmarks:
-                mp.solutions.drawing_utils.draw_landmarks(
-                    frame,
-                    results.pose_landmarks,
-                    mp_pose.POSE_CONNECTIONS
-                )
-
-            if results.pose_landmarks and frame_idx < len(ground_truth):
+            if frame_idx >= total_frames:
+                feedback_text = "Video Ended! Congrats, you're done!"
+            elif results.pose_landmarks and frame_idx < total_frames:
                 live_landmarks = {str(j): [lm.x, lm.y, lm.z] for j, lm in enumerate(results.pose_landmarks.landmark)}
                 ground_landmarks = ground_truth[frame_idx]
 
@@ -82,7 +73,7 @@ def generate_frames():
 
                 feedback_issues = []
 
-                def is_off(indexes, threshold=0.7):
+                def is_off(indexes, threshold=0.7):  # keep your version (0.7)
                     return any(keypoint_distances.get(i, 0) > threshold for i in indexes)
 
                 if is_off([12, 14, 16]):
@@ -94,27 +85,24 @@ def generate_frames():
                 if is_off([23, 25, 27]):
                     feedback_issues.append("Move left leg")
 
-                if not feedback_issues and average_distance < 0.5:
+                if not feedback_issues and average_distance < 0.4:
                     feedback_text = f"Perfect! Match: {match_percent:.1f}%"
+                elif len(feedback_issues) >= 3 or match_percent < 20:
+                    feedback_text = "Make sure your whole body is in frame!"
                 else:
                     feedback_text = f"{', '.join(feedback_issues)} (Match: {match_percent:.1f}%)"
 
-                frame_idx += 1
-            else:
-                feedback_text = "Video Ended! Congrats, you're done!" if frame_idx >= len(ground_truth) else "Pose Not Detected"
+                # 🛠 Save frames once per second
+                now = time.time()
+                if now - last_saved_time >= 1.0:
+                    last_saved_time = now
+                    filename = f"saved_frames/frame_{int(now)}.jpg"
+                    cv2.imwrite(filename, frame)
+                    print(f"Saved frame: {filename}")
 
-            with lock:
-                latest_feedback = feedback_text
+        with lock:
+            latest_feedback = feedback_text
 
-            # 🛠 Save frames ONLY during processing
-            now = time.time()
-            if now - last_saved_time >= 1.0:
-                last_saved_time = now
-                filename = f"saved_frames/frame_{int(now)}.jpg"
-                cv2.imwrite(filename, frame)
-                print(f"Saved frame: {filename}")
-
-        # Stream the frame (always stream, even if not saving)
         ret, buffer = cv2.imencode('.jpg', frame)
         frame_bytes = buffer.tobytes()
 
@@ -132,9 +120,10 @@ def feedback():
 
 @app.route('/start_processing')
 def start_processing():
-    global processing, frame_idx
+    global processing, frame_idx, start_time, latest_feedback
     processing = True
     frame_idx = 0
+    start_time = time.time()
     return jsonify({"status": "started"}), 200
 
 @app.route('/stop_processing')
@@ -143,7 +132,14 @@ def stop_processing():
     processing = False
     return jsonify({"status": "stopped"}), 200
 
-# 🆕 LIST SAVED FRAMES API
+@app.route('/reset_feedback')
+def reset_feedback():
+    global latest_feedback, frame_idx, processing
+    processing = False
+    frame_idx = 0
+    latest_feedback = "Waiting to Start..."
+    return jsonify({"status": "reset"}), 200
+
 @app.route('/list_saved_frames')
 def list_saved_frames():
     try:
@@ -153,20 +149,18 @@ def list_saved_frames():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# 🆕 SERVE SAVED FRAMES
 @app.route('/saved_frames/<path:filename>')
 def serve_saved_frame(filename):
     folder = os.path.abspath('saved_frames')
     return send_from_directory(folder, filename)
 
-# 🆕 CLEAR SAVED FRAMES
 @app.route('/clear_saved_frames')
 def clear_saved_frames():
     folder = 'saved_frames'
     try:
         if os.path.exists(folder):
-            shutil.rmtree(folder)  # delete whole folder
-        os.makedirs(folder)        # recreate fresh empty folder
+            shutil.rmtree(folder)
+        os.makedirs(folder)
         print("✅ saved_frames cleared successfully!")
         return jsonify({"status": "cleared"}), 200
     except Exception as e:
