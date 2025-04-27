@@ -23,6 +23,7 @@ package-lock.json
 package.json
 ENV/
 env/
+.env
 *.pyc
 __pycache__/
 .DS_Store

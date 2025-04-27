@@ -5,7 +5,9 @@ import { useWindowSize } from '@react-hook/window-size';
 const PostAnalysis = ({ feedbackLog, onRestart }) => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [savedFrames, setSavedFrames] = useState([]);
-  const [width, height] = useWindowSize();  // 📏 moved to top
+  const [width, height] = useWindowSize();  
+  const [humanizedFeedbackLog, setHumanizedFeedbackLog] = useState("");
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -15,12 +17,17 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
     const fetchFramesWithDelay = async () => {
       await new Promise(resolve => setTimeout(resolve, 1000)); // wait 1 second
       fetchSavedFrames();
+      //add gemini
+      const feedbackTexts = feedbackLog.map(entry => entry.feedback);
+      const humanized = await humanizeFeedback(feedbackTexts);
+      setHumanizedFeedbackLog(humanized);
+      
     };
 
     fetchFramesWithDelay();
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [feedbackLog]); 
 
   const fetchSavedFrames = async () => {
     try {
@@ -45,6 +52,39 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
     color: entry.feedback.includes("Perfect") ? "green" : (entry.feedback.includes("Pose Not Detected") ? "gray" : "orange"),
   }));
 
+  const humanizeFeedback = async (feedbackTexts) => {
+    try {
+      const prompt = `
+      You are a dance coach.
+      
+      Given these feedback comments about the Hottogo Chappell Roan Dance:
+      ${feedbackTexts.join("\n")}
+      
+      Write a short 3–5 sentence summary to help someone learn the dance:
+      - Talk about musicality and flow (e.g., behind the beat, stiff, smooth).
+      - Use analogies to famous dances, music, or trends. 
+      - Encourage and motivate, even for corrections.
+      
+      Be warm, modern, and concise.
+      `;
+      
+      const res = await fetch('http://localhost:5001/humanize_feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt })
+      });
+  
+      const data = await res.json();
+      return data.humanizedFeedback || "";  // <- if somehow undefined
+    } catch (error) {
+      console.error('Error humanizing feedback:', error);
+      return "";  
+    }
+  };
+  
+
   return (
     <div className="post-analysis" style={{ textAlign: "center", padding: "20px" }}>
       <h2>📈 Post-Dance Analysis</h2>
@@ -54,6 +94,13 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
         <li><strong>Good Poses:</strong> {goodPercentage}% ✅</li>
         <li><strong>Needs Improvement:</strong> {badPercentage}% ⚠️</li>
       </ul>
+
+      {humanizedFeedbackLog.trim() !== "" && (
+  <div style={{ fontSize: "18px", margin: "20px auto", width: "80%", color: "#555" }}>
+    <h3>🌟 Dance Vibe Summary:</h3>
+    <p>{humanizedFeedbackLog}</p>
+  </div>
+)}
 
       {/* Timeline */}
       <div style={{ display: 'flex', margin: '20px auto', width: '80%', height: '20px', backgroundColor: '#eee', borderRadius: '10px', overflow: 'hidden' }}>
@@ -74,6 +121,8 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
       <ul style={{ textAlign: "left", margin: "0 auto", width: "80%" }}>
         {feedbackLog.map((entry, index) => (
           <li key={index} style={{ marginBottom: "20px" }}>
+          {/* {(humanizedFeedbackLog.length > 0 ? humanizedFeedbackLog : feedbackLog).map((entry, index) => (
+  <li key={index} style={{ marginBottom: "20px" }}> */}
             <strong>{entry.time}s:</strong> {entry.feedback}
             <br />
             {savedFrames[index] && (
