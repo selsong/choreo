@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import '../styles/DanceSession.css';
+import '../styles/HomePage.css';
+
 
 const DanceSession = ({ onEnd }) => {
   const videoRef = useRef(null);
@@ -117,7 +119,7 @@ const DanceSession = ({ onEnd }) => {
             width="500"
             height="700"
           />
-          <button onClick={startOrRestartDance} style={{ marginTop: '10px' }}>
+          <button onClick={startOrRestartDance}>
             {hasPlayedOnce ? 'Restart' : 'Play'}
           </button>
         </div>
@@ -143,7 +145,7 @@ const DanceSession = ({ onEnd }) => {
         </div>
 
       </div>
-      <button onClick={onEnd} className="end-dance-button">End Dance</button>
+      <button onClick={onEnd}>End Dance</button>
     </div>
   );
 };

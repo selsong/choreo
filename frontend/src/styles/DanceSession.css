@@ -9,6 +9,25 @@
     width: 100%;
     overflow-x: hidden;
   }
+
+  /* .end-dance-button {
+    border: 2px solid #94c3fa;
+    border-radius: 30px;
+    background: white;
+    color: #94c3fa;
+    font-weight: bold;
+    font-size: 1.5rem;
+    padding: 16px 32px;
+    margin-top: 40px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .end-dance-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(148, 195, 250, 0.7);
+  }
+   */
   
   
 /* Aura background animation */
@@ -46,7 +65,7 @@
   
   /* Container for videos */
   .video-container {
-    /* display: flex; */
+    display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 40px;
@@ -64,30 +83,24 @@
   }
     
   /* Play/Pause and End Dance buttons */
-  button {
-    padding: 10px 20px;
+  /* button {
     border: none;
     border-radius: 30px;
-    background-color: #94c3fa;
-    color: white;
     font-weight: bold;
-    font-size: 1rem;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    margin-top: 10px;
+    background: white;
+    color: #94c3fa;
+    margin-top: 40px;
+    padding: 16px 32px;
+    font-size: 1.5rem;
   }
   
   button:hover {
     transform: scale(1.05);
     box-shadow: 0 0 15px rgba(255, 150, 255, 0.7);
-  }
-  
-  /* End Dance Button */
-  .end-dance-button {
-    margin-top: 40px;
-    background: linear-gradient(135deg, #ff4e50, #f9d423);
-  }
-  
+  } */
+    
   /* Canvas */
   #referenceCanvas {
     border-radius: 10px;

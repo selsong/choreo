@@ -11,6 +11,8 @@ keypoints/
 *.avi
 
 # Ignore Python venv
+venv39/
+.python-version
 venv/
 .venv/
 node_modules
