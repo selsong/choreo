@@ -90,11 +90,11 @@ const PostAnalysis = ({ feedbackLog, onRestart }) => {
     <div className="post-analysis dance-sess">
       <h2>Post-Dance Analysis</h2>
       <p>Great job! Here's your feedback:</p>
+    <div className="pose-summary">
+      <p><strong>Good Poses:</strong> {goodPercentage}%</p>
+      <p><strong>Needs Improvement:</strong> {badPercentage}%</p>
+    </div>
 
-      <ul>
-        <li><strong>Good Poses:</strong> {goodPercentage}% </li>
-        <li><strong>Needs Improvement:</strong> {badPercentage}% </li>
-      </ul>
 
       {humanizedFeedbackLog.trim() !== "" && (() => {
   const parts = humanizedFeedbackLog.split('*').map(s => s.trim()).filter(s => s.length > 0);
