@@ -91,8 +91,9 @@ const DanceSession = ({ onEnd }) => {
   };
 
   return (
-    <div className="dance-sess aura-background">
-      <h1>choreo</h1>
+    <div className="dance-session aura-background">
+    <h1>choreo</h1>
+
       <div className="video-container">
 
         {/* Reference Video + Canvas */}
