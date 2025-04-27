@@ -165,7 +165,7 @@ const DanceSession = ({ onEnd }) => {
   };
 
   return (
-    <div className="dance-sess aura-background">
+    <div className="dance-sess">
       <h1>choreo</h1>
 
       {showStartOverlay && (
