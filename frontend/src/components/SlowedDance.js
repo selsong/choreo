@@ -191,8 +191,8 @@ const DanceSession = ({ onEnd }) => {
           <video
             ref={videoRef}
             src="/videos/hot_to_go.mp4"
-            width="1024"
-            height="768"
+            width="640"
+            height="480"
             style={{ width: 0, height: 0, opacity: 0, position: 'absolute', pointerEvents: 'none' }}
             crossOrigin="anonymous"
           />
