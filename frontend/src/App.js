@@ -3,6 +3,7 @@ import HomePage from './components/HomePage';
 import DanceSession from './components/DanceSession';
 import SlowedDance from './components/SlowedDance'; // New
 import PostAnalysis from './components/PostAnalysis';
+import SuperShy from './components/SuperShy';
 import './styles/App.css';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
     <div className="App">
       {page === 'home' && <HomePage onStart={() => setPage('dance')} />}
       {page === 'dance' && <DanceSession onEnd={handleEndDance} onPractice={() => setPage('practice')} />}
+      {/* {page === 'dance' && <SuperShy onEnd={handleEndDance} onPractice={() => setPage('practice')} />} */}
       {page === 'practice' && <SlowedDance onEnd={handleEndDance} />}
       {page === 'analysis' && <PostAnalysis feedbackLog={feedbackLog} onRestart={handleRestart} />}
     </div>
