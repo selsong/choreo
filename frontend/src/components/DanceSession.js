@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import '../styles/DanceSession.css';
 
-const DanceSession = ({ onEnd, onPractice }) => {
+const DanceSession = ({ onEnd, onPractice, videoId }) => {
   const videoRef = useRef(null);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [feedback, setFeedback] = useState("Loading...");
@@ -28,11 +28,13 @@ const DanceSession = ({ onEnd, onPractice }) => {
   }, []);
 
   useEffect(() => {
-    fetch('/keypoints/hot_to_go-keypoints.json')
-      .then(res => res.json())
-      .then(data => setGroundTruth(data))
-      .catch(err => console.error("Error loading keypoints:", err));
-  }, []);
+    if (videoId) {
+      fetch(`/keypoints/${videoId}-keypoints.json`)
+        .then(res => res.json())
+        .then(data => setGroundTruth(data))
+        .catch(err => console.error("Error loading keypoints:", err));
+    }
+  }, [videoId]);
 
   useEffect(() => {
     let animationFrameId;
@@ -188,7 +190,7 @@ const DanceSession = ({ onEnd, onPractice }) => {
           <h2>Reference Dance Video</h2>
           <video
             ref={videoRef}
-            src="/videos/hot_to_go.mp4"
+            src={`/videos/${videoId}/video.mp4`}
             width="1024"
             height="768"
             style={{ width: 0, height: 0, opacity: 0, position: 'absolute', pointerEvents: 'none' }}
@@ -207,7 +209,7 @@ const DanceSession = ({ onEnd, onPractice }) => {
           />
           <div key={feedback} className={`feedback-text ${getFeedbackColorClass(feedback)}`}>
             {feedback}
-
+          </div>
         </div>
       </div>
 
@@ -229,7 +231,6 @@ const DanceSession = ({ onEnd, onPractice }) => {
         >
           Practice in 0.5x
         </button>
-      </div>
       </div>
     </div>
   );

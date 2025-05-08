@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 
 export default function HomePage({ onStart }) {
   const [showSlogan, setShowSlogan] = useState(false);
-  const [loading, setLoading] = useState(false); // NEW: loading state
+  const [loading, setLoading] = useState(false);
+  const [tiktokLink, setTiktokLink] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSlogan(true), 1500);
@@ -16,17 +18,44 @@ export default function HomePage({ onStart }) {
     }
   };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      console.log("File selected:", file.name);
-      setLoading(true); // Show loading spinner
+  const validateTiktokLink = (link) => {
+    // Basic TikTok link validation
+    const tiktokRegex = /^https?:\/\/((?:vm|vt|www)\.)?tiktok\.com\/.*\/video\/\d+/;
+    return tiktokRegex.test(link);
+  };
 
-      // Simulate a 2-second \"processing\" delay
-      setTimeout(() => {
-        setLoading(false);
-        onStart(); // Then start Dance Session
-      }, 2000);
+  const handleTiktokSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!validateTiktokLink(tiktokLink)) {
+      setError('Please enter a valid TikTok video link');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5001/process_tiktok', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tiktokLink }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process TikTok video');
+      }
+
+      const data = await response.json();
+      console.log('Video processed:', data);
+      onStart(data.video_id); // Pass video ID to parent
+    } catch (err) {
+      setError('Failed to process video. Please try again.');
+      console.error('Error processing video:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,25 +92,39 @@ export default function HomePage({ onStart }) {
       {/* Upload Section */}
       <div id="upload" className="min-h-screen w-full flex flex-col items-center justify-center bg-white p-10">
         <div className="text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-blue-500">Welcome, Fiona!</h2>
-          <p className="text-gray-600 text-lg">Upload your dance video to get started</p>
+          <h2 className="text-4xl md:text-5xl font-bold text-blue-500">Welcome to Choreo!</h2>
+          <p className="text-gray-600 text-lg">Paste a TikTok dance video link to get started</p>
 
-          <div className="bg-blue-50 border-2 border-blue-300 p-6 rounded-xl shadow-md flex flex-col items-center space-y-4">
+          <div className="bg-blue-50 border-2 border-blue-300 p-6 rounded-xl shadow-md flex flex-col items-center space-y-4 max-w-2xl mx-auto">
             {!loading ? (
-              <>
-                <label className="text-blue-500 font-semibold text-lg">
-                  Upload Your Dance Video
-                </label>
-                <input 
-                  type="file" 
-                  onChange={handleFileUpload}
-                  className="p-3 border-2 border-blue-300 rounded-lg cursor-pointer bg-white"
-                />
-              </>
+              <form onSubmit={handleTiktokSubmit} className="w-full space-y-4">
+                <div className="flex flex-col space-y-2">
+                  <label className="text-blue-500 font-semibold text-lg">
+                    TikTok Video Link
+                  </label>
+                  <input 
+                    type="text" 
+                    value={tiktokLink}
+                    onChange={(e) => setTiktokLink(e.target.value)}
+                    placeholder="https://www.tiktok.com/@username/video/1234567890"
+                    className="p-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                  {error && (
+                    <p className="text-red-500 text-sm mt-1">{error}</p>
+                  )}
+                </div>
+                <button 
+                  type="submit"
+                  className="w-full bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Start Dancing
+                </button>
+              </form>
             ) : (
               <div className="flex flex-col items-center space-y-4">
                 <div className="loader"></div>
                 <p className="text-blue-500 font-semibold text-lg">Processing your video...</p>
+                <p className="text-gray-500 text-sm">This may take a few moments</p>
               </div>
             )}
           </div>
