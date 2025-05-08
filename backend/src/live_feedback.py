@@ -10,6 +10,10 @@ import time
 from flask_cors import CORS
 import google.generativeai as genai
 from dotenv import load_dotenv
+import yt_dlp
+import uuid
+import subprocess
+from pathlib import Path
 load_dotenv()  # Load .env variables
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
@@ -19,8 +23,14 @@ genai.configure(api_key=GEMINI_API_KEY)
 app = Flask(__name__)
 CORS(app)
 
-# Ensure saved_frames/ exists
+# Ensure directories exist
 os.makedirs('saved_frames', exist_ok=True)
+os.makedirs('videos', exist_ok=True)
+os.makedirs('keypoints', exist_ok=True)
+
+# Global variables
+ground_truth = None
+video_path = None
 
 # Load saved keypoints
 with open('./keypoints/hot_to_go-keypoints.json', 'r') as f:
@@ -89,7 +99,7 @@ def generate_frames():
 
                 feedback_issues = []
 
-                def is_off(indexes, threshold=0.7):
+                def is_off(indexes, threshold=0.5):  # made threshold stricter: from 0.7 → 0.5
                     return any(keypoint_distances.get(i, 0) > threshold for i in indexes)
 
                 if is_off([12, 14, 16]):
@@ -101,10 +111,12 @@ def generate_frames():
                 if is_off([23, 25, 27]):
                     feedback_issues.append("Move left leg")
 
-                if not feedback_issues and average_distance < 0.4:
+                if not feedback_issues and average_distance < 0.35:  # made average stricter too: from 0.4 → 0.25
                     feedback_text = f"Perfect! Match: {match_percent:.1f}%"
-                elif len(feedback_issues) >= 3 or match_percent < 20:
+                elif match_percent < 20 or len(feedback_issues) >= 3:
                     feedback_text = "Make sure your whole body is in frame!"
+                elif match_percent < 50:  # NEW: "Not Good" if match is between 20 and 50
+                    feedback_text = "Not good, keep practicing!"
                 else:
                     feedback_text = f"{', '.join(feedback_issues)} (Match: {match_percent:.1f}%)"
 
@@ -213,6 +225,85 @@ def humanize_feedback():
         print(f"Error contacting Gemini API: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/process_tiktok', methods=['POST'])
+def process_tiktok():
+    try:
+        tiktok_link = request.json.get('tiktokLink')
+        if not tiktok_link:
+            return jsonify({'error': 'No TikTok link provided'}), 400
+
+        # Generate unique ID for this video
+        video_id = str(uuid.uuid4())
+        video_dir = Path('videos') / video_id
+        video_dir.mkdir(exist_ok=True)
+        
+        # Download video using yt-dlp
+        ydl_opts = {
+            'format': 'best[ext=mp4]',
+            'outtmpl': str(video_dir / 'video.mp4'),
+            'quiet': True,
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([tiktok_link])
+        
+        video_path = str(video_dir / 'video.mp4')
+        
+        # Extract keypoints
+        keypoints = extract_keypoints(video_path)
+        
+        # Save keypoints
+        keypoints_path = Path('keypoints') / f'{video_id}-keypoints.json'
+        with open(keypoints_path, 'w') as f:
+            json.dump(keypoints, f)
+        
+        # Update global variables
+        global ground_truth
+        ground_truth = keypoints
+        
+        return jsonify({
+            'status': 'success',
+            'video_id': video_id,
+            'message': 'Video processed successfully'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error processing TikTok video: {e}")
+        return jsonify({'error': str(e)}), 500
+
+def extract_keypoints(video_path):
+    keypoints_list = []
+    cap = cv2.VideoCapture(video_path)
+    
+    with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+        while cap.isOpened():
+            success, frame = cap.read()
+            if not success:
+                break
+                
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = pose.process(image)
+            
+            if results.pose_landmarks:
+                pose_landmarks = {str(j): [lmk.x, lmk.y, lmk.z] 
+                                for j, lmk in enumerate(results.pose_landmarks.landmark)}
+                keypoints_list.append(pose_landmarks)
+            else:
+                # Add empty landmarks if pose not detected
+                keypoints_list.append({})
+    
+    cap.release()
+    return keypoints_list
+
+@app.route('/videos/<video_id>/<filename>')
+def serve_video(video_id, filename):
+    folder = os.path.abspath(f'videos/{video_id}')
+    return send_from_directory(folder, filename)
+
+@app.route('/keypoints/<filename>')
+def serve_keypoints(filename):
+    folder = os.path.abspath('keypoints')
+    return send_from_directory(folder, filename)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, threaded=True)
