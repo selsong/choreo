@@ -295,5 +295,15 @@ def extract_keypoints(video_path):
     cap.release()
     return keypoints_list
 
+@app.route('/videos/<video_id>/<filename>')
+def serve_video(video_id, filename):
+    folder = os.path.abspath(f'videos/{video_id}')
+    return send_from_directory(folder, filename)
+
+@app.route('/keypoints/<filename>')
+def serve_keypoints(filename):
+    folder = os.path.abspath('keypoints')
+    return send_from_directory(folder, filename)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, threaded=True)
