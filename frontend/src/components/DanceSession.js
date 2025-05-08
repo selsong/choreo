@@ -35,50 +35,6 @@ const DanceSession = ({ onEnd, onPractice }) => {
   }, []);
 
   useEffect(() => {
-    let animationFrameId;
-    const canvas = document.getElementById('referenceCanvas');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx && videoRef.current) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      }
-    }
-
-    const draw = () => {
-      if (videoRef.current && groundTruth.length > 0) {
-        const canvas = document.getElementById('referenceCanvas');
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-
-            const currentTime = videoRef.current.currentTime;
-            const fps = 30;
-            const frameIdx = Math.floor(currentTime * fps);
-
-            if (frameIdx >= 0 && frameIdx < groundTruth.length) {
-              const keypoints = groundTruth[frameIdx];
-
-              if (keypoints) {
-                for (const [, [x, y]] of Object.entries(keypoints)) {
-                  ctx.beginPath();
-                  ctx.arc(x * canvas.width, y * canvas.height, 5, 0, 2 * Math.PI);
-                  ctx.fill();
-                }
-              }
-            }
-          }
-        }
-      }
-      animationFrameId = requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [groundTruth]);
-
-  useEffect(() => {
     if (!startTime) {
       setStartTime(Date.now());
     }
@@ -189,12 +145,12 @@ const DanceSession = ({ onEnd, onPractice }) => {
           <video
             ref={videoRef}
             src="/videos/hot_to_go.mp4"
-            width="1024"
-            height="768"
-            style={{ width: 0, height: 0, opacity: 0, position: 'absolute', pointerEvents: 'none' }}
+            width="380"
+            height="640"
+            muted
+            style={{ position: 'relative', zIndex: 10 }}
             crossOrigin="anonymous"
           />
-          <canvas id="referenceCanvas" width="380" height="640" />
         </div>
 
         <div className="video-wrapper">
@@ -207,29 +163,28 @@ const DanceSession = ({ onEnd, onPractice }) => {
           />
           <div key={feedback} className={`feedback-text ${getFeedbackColorClass(feedback)}`}>
             {feedback}
-
+          </div>
         </div>
-      </div>
 
-      <div className="button-row">
-        <button onClick={startOrRestartDance} className="restart-button">
-          {hasPlayedOnce ? 'Restart' : 'Play'}
-        </button>
+        <div className="button-row">
+          <button onClick={startOrRestartDance} className="restart-button">
+            {hasPlayedOnce ? 'Restart' : 'Play'}
+          </button>
 
-        <button onClick={handleEndDance} className="end-dance-button">
-          End Dance
-        </button>
+          <button onClick={handleEndDance} className="end-dance-button">
+            End Dance
+          </button>
 
-        <button 
-          onClick={async () => {
-            await fetch('http://localhost:5001/reset_feedback');
-            onPractice(); // THEN move to practice page
-          }}
-          className="practice-button"
-        >
-          Practice in 0.5x
-        </button>
-      </div>
+          <button 
+            onClick={async () => {
+              await fetch('http://localhost:5001/reset_feedback');
+              onPractice(); // THEN move to practice page
+            }}
+            className="practice-button"
+          >
+            Practice in 0.5x
+          </button>
+        </div>
       </div>
     </div>
   );
