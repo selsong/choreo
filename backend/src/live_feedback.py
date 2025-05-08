@@ -11,8 +11,7 @@ from flask_cors import CORS
 import google.generativeai as genai
 from dotenv import load_dotenv
 import yt_dlp
-import uuid
-import subprocess
+import hashlib
 from pathlib import Path
 from supabase import create_client, Client
 load_dotenv()  # Load .env variables
@@ -234,6 +233,7 @@ def humanize_feedback():
 
 @app.route('/process_tiktok', methods=['POST'])
 def process_tiktok():
+    global ground_truth
     try:
         data = request.get_json()
         tiktok_link = data.get('tiktokLink')
@@ -241,28 +241,72 @@ def process_tiktok():
         if not tiktok_link:
             return jsonify({'error': 'No TikTok link provided'}), 400
 
-        # Generate unique ID for the video
-        video_id = str(uuid.uuid4())
+        # Generate consistent ID from TikTok URL
+        video_id = hashlib.sha256(tiktok_link.encode()).hexdigest()[:16]
+
+        # Check if video already exists in database
+        existing_video = supabase.table('videos').select('*').eq('id', video_id).execute()
         
+        if existing_video.data and len(existing_video.data) > 0:
+            # Video already exists, try to use existing data
+            video_data = existing_video.data[0]
+            expected_keypoint_path = f'{video_id}-keypoints.json'  # Remove 'keypoints/' prefix
+            
+            try:
+                # Get existing keypoints
+                keypoints_result = supabase.storage.from_('keypoints').download(expected_keypoint_path)
+                if hasattr(keypoints_result, 'error') and keypoints_result.error:
+                    error_msg = f"Keypoint path mismatch - Expected: {expected_keypoint_path}, Found in DB: {video_data['keypoint_path']}"
+                    print(error_msg)
+                    return jsonify({'error': error_msg}), 500
+                    
+                # Create temporary file to load keypoints
+                temp_dir = f'temp_{video_id}'
+                os.makedirs(temp_dir, exist_ok=True)
+                temp_keypoints_path = os.path.join(temp_dir, 'keypoints.json')
+                
+                with open(temp_keypoints_path, 'wb') as f:
+                    f.write(keypoints_result)
+                    
+                with open(temp_keypoints_path, 'r') as f:
+                    keypoints = json.load(f)
+                    
+                # Update global variables
+                ground_truth = keypoints
+                
+                # Clean up
+                shutil.rmtree(temp_dir)
+                
+                return jsonify({
+                    'video_id': video_id,
+                    'message': 'Using existing video data'
+                })
+            except Exception as e:
+                error_msg = f"Error loading keypoints - ID: {video_id}, Expected path: {expected_keypoint_path}, DB path: {video_data['keypoint_path']}, Error: {str(e)}"
+                print(error_msg)
+                return jsonify({'error': error_msg}), 500
+
+        # If video doesn't exist, process it
         # Create temporary directory for processing
         temp_dir = f'temp_{video_id}'
         os.makedirs(temp_dir, exist_ok=True)
         
-        # Download video using yt-dlp to temp directory
+        # Download video using yt-dlp with optimized settings
         temp_video_path = os.path.join(temp_dir, 'video.mp4')
         ydl_opts = {
-            'format': 'best[ext=mp4]',
+            'format': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[ext=mp4]/best',  # More flexible format selection
             'outtmpl': temp_video_path,
             'quiet': True,
+            'merge_output_format': 'mp4'
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([tiktok_link])
         
-        # Extract keypoints
+        # Extract keypoints from video
         keypoints = extract_keypoints(temp_video_path)
         
-        # Save keypoints to temp file
+        # Save keypoints to JSON file
         temp_keypoints_path = os.path.join(temp_dir, 'keypoints.json')
         with open(temp_keypoints_path, 'w') as f:
             json.dump(keypoints, f)
@@ -279,10 +323,11 @@ def process_tiktok():
                 raise Exception(f"Failed to upload video: {result.error}")
 
         # Upload keypoints to Supabase storage
+        keypoint_path = f'{video_id}-keypoints.json'  # Remove 'keypoints/' prefix
         with open(temp_keypoints_path, 'rb') as f:
             keypoints_data = f.read()
             result = supabase.storage.from_('keypoints').upload(
-                f'{video_id}-keypoints.json',
+                keypoint_path,
                 keypoints_data,
                 file_options={'content-type': 'application/json'}
             )
@@ -294,7 +339,7 @@ def process_tiktok():
             'id': video_id,
             'url': tiktok_link,
             'video_path': f'videos/{video_id}/video.mp4',
-            'keypoint_path': f'keypoints/{video_id}-keypoints.json'
+            'keypoint_path': keypoint_path  # Store just the filename, not the full path
         }
         
         result = supabase.table('videos').insert(video_data).execute()
@@ -302,7 +347,6 @@ def process_tiktok():
             raise Exception(f"Failed to store video metadata: {result.error}")
 
         # Update global variables
-        global ground_truth
         ground_truth = keypoints
 
         # Clean up temporary directory
@@ -384,15 +428,15 @@ def serve_keypoints(filename):
         with open(temp_path, 'wb') as f:
             f.write(result)
             
-        response = send_file(temp_path, mimetype='application/json')
-        
-        # Clean up the temporary file after sending
-        @response.call_on_close
-        def cleanup():
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-                
-        return response
+        # Load and serve the JSON
+        with open(temp_path, 'r') as f:
+            keypoints_data = json.load(f)
+            
+        # Clean up the temporary file
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+            
+        return jsonify(keypoints_data)
         
     except Exception as e:
         print(f"Error serving keypoints: {str(e)}")
