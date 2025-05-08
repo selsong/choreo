@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import '../styles/DanceSession.css';
+import { createClient } from '../utils/supabase';
 
 const DanceSession = ({ onEnd, onPractice, videoId }) => {
   const videoRef = useRef(null);
@@ -13,10 +14,21 @@ const DanceSession = ({ onEnd, onPractice, videoId }) => {
   const [feedbackLog, setFeedbackLog] = useState([]);
   const [startTime, setStartTime] = useState(null);
   const [error, setError] = useState(null);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   useEffect(() => {
-    if (videoRef.current) {
+    if (videoId && videoRef.current) {
+      const supabase = createClient();
+      
+      // Get video URL
+      const { data: videoData } = supabase.storage
+        .from('videos')
+        .getPublicUrl(`${videoId}/video.mp4`);
+      
+      videoRef.current.src = videoData.publicUrl;
+      
       videoRef.current.addEventListener('loadeddata', () => {
+        setIsVideoLoaded(true);
         const canvas = document.getElementById('referenceCanvas');
         if (canvas) {
           const ctx = canvas.getContext('2d');
@@ -26,21 +38,24 @@ const DanceSession = ({ onEnd, onPractice, videoId }) => {
         }
       });
     }
-  }, []);
+  }, [videoId]);
 
   useEffect(() => {
     if (videoId) {
       console.log('Fetching keypoints for video:', videoId);
-      fetch(`http://localhost:5001/keypoints/${videoId}-keypoints.json`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
+      const supabase = createClient();
+      
+      supabase.storage
+        .from('keypoints')
+        .download(`${videoId}-keypoints.json`)
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return data.text();
         })
-        .then(data => {
-          console.log('Loaded keypoints:', data.length);
-          setGroundTruth(data);
+        .then(text => {
+          const keypoints = JSON.parse(text);
+          console.log('Loaded keypoints:', keypoints.length);
+          setGroundTruth(keypoints);
           setError(null);
         })
         .catch(err => {
@@ -101,12 +116,7 @@ const DanceSession = ({ onEnd, onPractice, videoId }) => {
 
     const interval = setInterval(() => {
       fetch('http://localhost:5001/feedback')
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
           if (data.feedback !== feedback) {
             setFeedback(data.feedback);
@@ -117,10 +127,7 @@ const DanceSession = ({ onEnd, onPractice, videoId }) => {
             }]);
           }
         })
-        .catch(err => {
-          console.error("Error fetching feedback:", err);
-          setFeedback("Waiting for backend connection...");
-        });
+        .catch(err => console.error("Error fetching feedback:", err));
     }, 1000);
 
     return () => clearInterval(interval);
@@ -133,81 +140,45 @@ const DanceSession = ({ onEnd, onPractice, videoId }) => {
   };
 
   const startOrRestartDance = async () => {
-    if (!videoId) {
-      setError('No video loaded. Please upload a video first.');
-      return;
-    }
+    await fetch('http://localhost:5001/clear_saved_frames', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ really_clear: true })
+    });
 
-    try {
-      const response = await fetch('http://localhost:5001/clear_saved_frames', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ really_clear: true })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to clear saved frames');
-      }
-
-      if (videoRef.current) {
-        setCountdown(3);
-    
-        let countdownTimer = setInterval(() => {
-          setCountdown(prev => {
-            if (prev === 1) {
+    if (videoRef.current) {
+      setCountdown(3);
+  
+      let countdownTimer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev === 1) {
+            setTimeout(() => {
+              setCountdown("GO");
               setTimeout(() => {
-                setCountdown("GO");
-                setTimeout(() => {
-                  actuallyStartDance();
-                  setCountdown(null);
-                }, 800);
-              }, 1000);
-              clearInterval(countdownTimer);
-              return 1;
-            } else {
-              return prev - 1;
-            }
-          });
-        }, 1000);
-      }
-    } catch (err) {
-      console.error('Error starting dance:', err);
-      setError('Error connecting to backend. Please make sure the server is running.');
+                actuallyStartDance();
+                setCountdown(null);
+              }, 800);
+            }, 1000);
+            clearInterval(countdownTimer);
+            return 1;
+          } else {
+            return prev - 1;
+          }
+        });
+      }, 1000);
     }
   };
 
   const actuallyStartDance = async () => {
     if (videoRef.current) {
-      try {
-        console.log('Starting dance session');
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-        
-        const stopResponse = await fetch('http://localhost:5001/stop_processing');
-        if (!stopResponse.ok) throw new Error('Failed to stop processing');
-        
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        
-        const startResponse = await fetch('http://localhost:5001/start_processing');
-        if (!startResponse.ok) throw new Error('Failed to start processing');
-        
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log('Video playback started');
-              setHasPlayedOnce(true);
-              setStartTime(Date.now());
-            })
-            .catch(error => {
-              console.error('Error playing video:', error);
-              setError('Error playing video: ' + error.message);
-            });
-        }
-      } catch (err) {
-        console.error('Error in actuallyStartDance:', err);
-        setError('Error connecting to backend. Please make sure the server is running.');
-      }
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      await fetch('http://localhost:5001/stop_processing');
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await fetch('http://localhost:5001/start_processing');
+      videoRef.current.play();
+      setHasPlayedOnce(true);
+      setStartTime(Date.now());
     }
   };
 
@@ -254,9 +225,6 @@ const DanceSession = ({ onEnd, onPractice, videoId }) => {
           <h2>Reference Dance Video</h2>
           <video
             ref={videoRef}
-            src={`http://localhost:5001/videos/${videoId}/video.mp4`}
-            width="380"
-            height="640"
             style={{ display: 'block' }}
             crossOrigin="anonymous"
             preload="auto"
@@ -269,8 +237,6 @@ const DanceSession = ({ onEnd, onPractice, videoId }) => {
           <img
             src="http://localhost:5001/video_feed"
             alt="Dancing Live Stream"
-            width="380"
-            height="640"
           />
           <div key={feedback} className={`feedback-text ${getFeedbackColorClass(feedback)}`}>
             {feedback}

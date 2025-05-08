@@ -21,17 +21,22 @@ function App() {
   };
 
   const handleVideoProcessed = (id) => {
+    console.log('Video processed with ID:', id);
     setVideoId(id);
     setPage('dance');
   };
 
   return (
     <div className="App">
-      {page === 'home' && <HomePage onStart={handleVideoProcessed} />}
-      {/* {page === 'dance' && <DanceSession onEnd={handleEndDance} onPractice={() => setPage('practice')} />} */}
-      {/* {page === 'dance' && <SuperShy onEnd={handleEndDance} onPractice={() => setPage('practice')} />} */}
-      {/* {page === 'dance' && <SlowedDance onEnd={handleEndDance} />} */}
-      {page === 'dance' && <DanceSession onEnd={handleEndDance} onPractice={() => setPage('practice')} videoId={videoId} />}
+      {page === 'home' ? (
+        <HomePage onVideoProcessed={handleVideoProcessed} />
+      ) : (
+        <DanceSession 
+          onEnd={handleEndDance} 
+          onPractice={() => setPage('home')}
+          videoId={videoId}
+        />
+      )}
       {page === 'analysis' && <PostAnalysis feedbackLog={feedbackLog} onRestart={handleRestart} />}
     </div>
   );
