@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { createClient } from '../utils/supabase';
 
-export default function HomePage({ onStart }) {
+export default function HomePage({ onVideoProcessed }) {
   const [showSlogan, setShowSlogan] = useState(false);
   const [loading, setLoading] = useState(false);
   const [tiktokLink, setTiktokLink] = useState('');
@@ -50,7 +51,7 @@ export default function HomePage({ onStart }) {
 
       const data = await response.json();
       console.log('Video processed:', data);
-      onStart(data.video_id); // Pass video ID to parent
+      onVideoProcessed(data.video_id); // Pass video ID to parent
     } catch (err) {
       setError('Failed to process video. Please try again.');
       console.error('Error processing video:', err);
